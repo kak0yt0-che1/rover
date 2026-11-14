@@ -176,9 +176,9 @@
 
   // ---------- events ----------
   const EVENTS = [
-    { id: "flare", title: "Solar flare", p: 0.07, text: "A solar flare cut solar-cell output for three days.", lesson: "Power margin and a bigger battery absorb space weather." },
-    { id: "outage", title: "Ground station outage", p: 0.08, text: "A ground station went offline for two days.", lesson: "A station network and onboard storage cover gaps in contact." },
-    { id: "glitch", title: "Instrument glitch", p: 0.06, text: "One instrument restarted and lost two days of measurements.", lesson: "Two different instruments make a mission less fragile." },
+    { id: "flare", title: "Solar flare", p: 0.03, text: "A solar flare cut solar-cell output for three days.", lesson: "Power margin and a bigger battery absorb space weather." },
+    { id: "outage", title: "Ground station outage", p: 0.035, text: "A ground station went offline for two days.", lesson: "A station network and onboard storage cover gaps in contact." },
+    { id: "glitch", title: "Instrument glitch", p: 0.03, text: "One instrument restarted and lost two days of measurements.", lesson: "Two different instruments make a mission less fragile." },
     { id: "wing", title: "Wing deployment", p: 0, text: "", lesson: "" },
   ];
   MD.EVENTS = EVENTS;
