@@ -139,4 +139,30 @@ module.exports = async function (H) {
     await page.locator("button", { hasText: "Enter the assembly bay" }).waitFor();
     await page.ctx.close();
   });
+  // 8. quick tour: 5 steps, skippable, remembered
+  await test("tour: five steps, then gone after reload", async (problems) => {
+    const page = await newPage({ width: 1366, height: 768 }, problems);
+    await startScenario(page, "coast", "Normal");
+    const card = page.locator("section.tour");
+    expect((await card.count()) === 1, "tour card should show on the first visit");
+    for (let i = 0; i < 4; i++) { expect((await card.innerText()).includes("step " + (i + 1) + " of 5"), "wrong step " + i); await card.locator("button", { hasText: "Next" }).click(); }
+    await card.locator("button", { hasText: "Done" }).click();
+    expect((await page.locator("section.tour").count()) === 0, "tour should close");
+    await page.reload(); await btn(page, "Start designing").click();
+    expect((await page.locator("section.tour").count()) === 0, "tour should not come back");
+    await page.locator("#helpBtn").click(); await page.locator("button", { hasText: "Replay the quick tour" }).click();
+    expect((await page.locator("section.tour").count()) === 1, "replay should show the tour");
+    await page.locator("section.tour button", { hasText: "Skip the tour" }).click();
+    expect((await page.locator("section.tour").count()) === 0, "skip should close it");
+    await page.ctx.close();
+  });
+  // 9. model notes page
+  await test("model notes page: formulas and sources", async (problems) => {
+    const page = await newPage({ width: 1366, height: 768 }, problems);
+    await page.goto(H.getBase() + "model.html");
+    expect((await page.locator("math").count()) >= 8, "expected MathML formulas");
+    expect((await page.locator('a[href^="https://science.nasa.gov"]').count()) >= 1, "NASA source link missing");
+    await page.locator("a", { hasText: "Play" }).click(); await page.locator("button", { hasText: "Start designing" }).waitFor();
+    await page.ctx.close();
+  });
 };

@@ -42,3 +42,4 @@ input.txt { background:var(--raised); color:var(--text); border:1px solid var(--
 ul.tight { margin:0 0 var(--s1); padding-left:var(--s3); }
 .md-grid > * { min-width:0; } main#app { overflow-wrap:anywhere; }
 svg.craft { width:100%; height:auto; background:var(--bg); border-radius:var(--r); margin-bottom:var(--s2); }
+.tour { border-color:var(--accent); margin-bottom:var(--s2); }

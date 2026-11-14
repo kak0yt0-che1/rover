@@ -8,9 +8,9 @@
   // ---------- catalogues ----------
   MD.ORBITS = {
     leo: { name: "Low Earth orbit, 450 km", sun: 0.62, eclipseMin: 35, contactMin: 40, lunar: false, note: "Easy to reach, but short passes over a ground station and long eclipses." },
-    sso: { name: "Sun-synchronous orbit, 600 km", sun: 0.75, eclipseMin: 24, contactMin: 50, lunar: false, note: "Steady sunlight and a constant lighting angle for imaging; needs a bigger launcher." },
-    polar: { name: "Polar orbit, 550 km", sun: 0.68, eclipseMin: 30, contactMin: 80, lunar: false, note: "Passes over the poles, where a polar ground station sees you many times a day." },
-    lunar: { name: "Lunar orbit (trans-lunar injection)", sun: 0.95, eclipseMin: 5, contactMin: 70, lunar: true, note: "Long link distance and almost no eclipse. Needs delta-v to enter orbit around the Moon." },
+    sso: { name: "Sun-synchronous orbit, 600 km", sun: 0.75, eclipseMin: 24, contactMin: 50, lunar: false, note: "Keeps the sunlight angle on the ground steady, so pictures can be compared over time. Real example: NASA's Aqua flies one at about 705 km. Needs a bigger launcher." },
+    polar: { name: "Polar orbit, 550 km", sun: 0.68, eclipseMin: 30, contactMin: 80, lunar: false, note: "Goes from pole to pole, so a polar ground station sees you many times a day." },
+    lunar: { name: "Lunar orbit (trans-lunar injection)", sun: 0.95, eclipseMin: 5, contactMin: 70, lunar: true, note: "The Moon is about 384,000 km away: a long link and almost no eclipse. Needs delta-v to enter orbit around the Moon." },
   };
 
   // launchers are generic classes, not real vehicles. capacity = kg to that orbit (0 = cannot reach it)

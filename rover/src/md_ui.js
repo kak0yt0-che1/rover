@@ -31,6 +31,24 @@
   };
   const clampPct = (x) => Math.max(0, Math.min(100, x));
 
+  // ------------ short guided tour (5 steps, skippable, remembered) ------------
+  const TOUR = [
+    ["Six limits", "Every mission is a balance of six limits: mass, power, budget, data, communications and time. The dashboard on the right shows all six. A small orange tag marks the ones that matter most in this mission."],
+    ["Why the orbit changes the mass limit", "A rocket can lift less mass to a higher or farther orbit. Choose the rocket and the orbit first, then read the Mass bar: that is the kilograms your spacecraft may weigh."],
+    ["What a data rate is", "Data only counts when it reaches the ground. How much you can send per day is the radio speed times the minutes you can see a ground station. A camera makes a lot of data, so a slow radio will fall behind."],
+    ["Power and the battery", "Solar cells only work in sunlight. In the dark part of each orbit (eclipse) the battery runs the spacecraft. Bigger panels and batteries cost mass, money and build time."],
+    ["Teams, scores and trying again", "Up to four players can each own some choices. The score rewards finishing the mission, science, using your limits well, good decisions and teamwork. After launch, read why it went that way, then redesign."],
+  ];
+  G.tour = store.get("md.tourDone", false) ? null : 0;
+  function tourCard() {
+    if (G.tour == null) return null;
+    const [t, body] = TOUR[G.tour], last = G.tour === TOUR.length - 1;
+    const end = () => { G.tour = null; store.set("md.tourDone", true); render(true); };
+    return h("section", { class: "card tour", "aria-label": "Quick tour" },
+      h("p", { class: "dim small" }, `Quick tour, step ${G.tour + 1} of ${TOUR.length}`), h("h3", {}, t), h("p", {}, body),
+      h("div", { class: "row-actions" }, h("button", { class: "btn primary", onclick: () => { last ? end() : (G.tour++, render(true)); } }, last ? "Done" : "Next"), h("button", { class: "btn ghost", onclick: end }, "Skip the tour")));
+  }
+
   function setPhase(p) { G.phase = p; render(); window.scrollTo(0, 0); }
   function setD(k, v) { G.design[k] = v; G.approved.clear(); persist(); render(true); }
 
@@ -120,7 +138,7 @@
   function build() {
     const d = G.design, sc = MD.SCENARIOS[d.scenario], A = MD.analyse(d), roles = Object.keys(MD.ROLES);
     const owned = G.role === "all" ? ["launcher", "orbit", "ground", "bus", "solar", "battery", "prop", "payloads", "comms"] : roleKeys(G.role);
-    const panel = [h("div", { class: "hint" }, h("b", {}, sc.title + ": "), sc.objective, " ", sc.hint)];
+    const panel = [tourCard(), h("div", { class: "hint" }, h("b", {}, sc.title + ": "), sc.objective, " ", sc.hint)];
     if (G.players > 1) {
       panel.push(h("div", { class: "roles", role: "tablist" }, roles.map((r) => h("button", { role: "tab", "aria-selected": G.role === r, class: G.approved.has(r) ? "ok" : "", onclick: () => { G.role = r; render(); } }, `${MD.ROLES[r].name}`))));
       const r = MD.ROLES[G.role];
@@ -223,7 +241,9 @@
   document.getElementById("helpBtn").addEventListener("click", () => {
     const dlg = document.getElementById("help");
     dlg.replaceChildren(h("h2", {}, "How it works"),
+      h("button", { class: "btn small", onclick: () => { G.tour = 0; dlg.close(); if (G.phase !== "build") setPhase("build"); else render(true); } }, "Replay the quick tour"),
       h("ol", {}, h("li", {}, "Choose a mission, a difficulty and how many people play."), h("li", {}, "Build: bus, solar panels, battery, radio, instruments, rocket, orbit. Watch the six resources: mass, power, budget, data, communications, time."), h("li", {}, "Launch. The mission runs for 30 days, with random events. A report explains why it worked or not."), h("li", {}, "Redesign and fly again. Try a cheap design and a bold one: both can work.")),
+      h("p", {}, h("a", { href: "model.html" }, "Model notes: formulas, simplifications and NASA sources")),
       h("p", { class: "small dim" }, "All numbers are simplified for teaching. They are not data for any real rocket or spacecraft. Terrain data in the Mars game is from USGS."),
       h("button", { class: "btn", onclick: () => dlg.close() }, "Close"));
     dlg.showModal();

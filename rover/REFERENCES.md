@@ -13,3 +13,10 @@
 | NASA-SPACEAPP-2026/Space-Mission-Design-Game | read only for the challenge text; no code copied | n/a | https://github.com/NASA-SPACEAPP-2026/Space-Mission-Design-Game |
 
 Mission Design catalogue numbers (`src/md_model.js`) are game values, not taken from any source.
+
+## Added during the second autonomous session (pages opened 2026-11-15)
+| Resource | Used for | Licence | Link |
+|---|---|---|---|
+| NASA Earth Observatory, Catalog of Earth Satellite Orbits | orbit card text, `model.html` (Aqua 705 km, sun-synchronous purpose, polar, geostationary) | NASA content, reused with attribution; no NASA logos used | https://science.nasa.gov/earth/earth-observatory/catalog-of-earth-satellite-orbits |
+| NASA NSSDC Moon Fact Sheet | Moon distance in lunar orbit card and `model.html` | NASA public data | https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html |
+| playwright-core 1.49.1 (dev only, not shipped) | end-to-end tests in `tools/` | Apache-2.0 | https://github.com/microsoft/playwright |
