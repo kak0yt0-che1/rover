@@ -110,7 +110,7 @@
       })));
   }
   const GROUPS = {
-    launcher: () => pickGroup("Rocket", "Pick a launcher. The mass limit depends on the orbit you choose.", "launcher", MD.LAUNCHERS, (l) => `${l.cost} M · ${(l.reliability * 100).toFixed(0)}% reliable · ${l.wait} wk wait · carries ${MD.ORBITS[G.design.orbit] ? l.cap[G.design.orbit] : 0} kg here`),
+    launcher: () => pickGroup("Rocket", "Pick a launcher. The mass limit depends on the orbit you choose.", "launcher", MD.LAUNCHERS, (l) => `${l.cost} M · ${(l.reliability * 100).toFixed(0)}% reliable · ${l.wait} wk wait · ${l.cap[G.design.orbit] ? "carries " + l.cap[G.design.orbit] + " kg to this orbit" : "cannot reach this orbit"}`),
     orbit: () => pickGroup("Orbit", "Where you fly decides sunlight, ground contact and how useful the science is.", "orbit", MD.ORBITS, (o) => `${Math.round(o.sun * 100)}% sunlit · ${o.eclipseMin} min eclipse · ${o.contactMin} min contact/day`),
     ground: () => pickGroup("Ground stations", "More stations mean more time to talk to your spacecraft.", "ground", MD.GROUND, (g) => `${g.cost} M · contact x${g.contact}`),
     bus: () => pickGroup("Spacecraft bus", "The frame. Bigger means more payload slots and storage, and more mass and cost.", "bus", MD.BUSES, (b) => `${b.mass} kg · ${b.cost} M · ${b.slots} payload slot(s) · ${b.storage} GB storage`),
@@ -144,7 +144,7 @@
       h("div", { class: "bar " + (over ? "bad" : used / (cap || 1) > 0.9 ? "warn" : "") }, h("i", { style: `width:${clampPct((used / (cap || 1)) * 100)}%` })),
       h("p", { class: "why" }, WHY[key]));
     return h("aside", { class: "dash card" }, craftSVG(G.design), h("h3", {}, "Mission dashboard"),
-      res("mass", "Mass", A.mass.used, A.mass.cap || 1, `${num(A.mass.used)} / ${A.mass.cap} kg`, A.mass.used > A.mass.cap),
+      res("mass", "Mass", A.mass.used, A.mass.cap || 1, A.mass.cap ? `${num(A.mass.used)} / ${A.mass.cap} kg` : `${num(A.mass.used)} kg, this rocket cannot reach this orbit`, A.mass.used > A.mass.cap),
       res("power", "Power", A.power.load, Math.max(A.power.gen, 0.1), `use ${num(A.power.load)} W / make ${num(A.power.gen)} W`, A.power.gen < A.power.load),
       res("budget", "Budget", A.budget.used, A.budget.cap, `${num(A.budget.used)} / ${num(A.budget.cap)} M`, A.budget.used > A.budget.cap),
       res("data", "Data per day", A.data.perDay, Math.max(A.comms.downGB, 0.01), `make ${num(A.data.perDay, 2)} / send ${num(A.comms.downGB, 2)} GB`, A.comms.ratio < 0.5),
@@ -243,7 +243,7 @@
       sandbox ? null : h("div", { class: "grp" }, h("h3", {}, "Role check"),
         h("ul", { class: "tight" }, S.roles.map((r) => h("li", {}, `${r.name}: ${r.ok ? "goal met" : "goal not met"}`)))),
       R.analysis.warnings.length ? h("div", { class: "grp" }, h("h3", {}, "Things to improve"), R.analysis.warnings.map((w) => h("div", { class: "msg warn" }, w))) : null,
-      h("p", { class: "small dim" }, "Score = performance 30 + science 20 + efficiency 20 + decisions 15 + teamwork 15. Several different designs can score well. Model is simplified; see README."),
+      h("p", { class: "small dim" }, "Score = performance 30 + science 20 + efficiency 20 + decisions 15 + teamwork 15. Several different designs can score well. The model is simplified: see Model notes (model.html)."),
       comp ? h("div", { class: "row-actions" }, h("button", { class: "btn primary big", onclick: nextTeam }, G.comp.idx + 1 >= G.compN ? "See the ranking" : `Pass to ${G.compNames[G.comp.idx + 1]}`))
         : h("div", { class: "row-actions" },
           h("button", { class: "btn primary", onclick: () => setPhase("build") }, "Redesign"),
@@ -260,7 +260,7 @@
     const items = [];
     if (dl.sameDesign) items.push(h("li", {}, `You flew the same design again. The score moved by ${sgn(dl.total)} only because the random events were different this time.`));
     else {
-      items.push(h("li", {}, `Score ${sgn(dl.total)} compared with your last run of this mission.` + (dl.outcomeFrom !== dl.outcomeTo ? ` Outcome: ${OUT[dl.outcomeFrom]} to ${OUT[dl.outcomeTo]}.` : "")));
+      items.push(h("li", {}, (dl.total === 0 ? "Score unchanged compared with your last run of this mission." : `Score ${sgn(dl.total)} compared with your last run of this mission.`) + (dl.outcomeFrom !== dl.outcomeTo ? ` Outcome: ${OUT[dl.outcomeFrom]} to ${OUT[dl.outcomeTo]}.` : "")));
       dl.changes.forEach((c) => items.push(h("li", {}, `You changed the ${c.label}: ${c.from} to ${c.to}.`)));
       if (dl.biggest) items.push(h("li", {}, `The biggest score change was ${PART[dl.biggest[0]]} (${sgn(dl.biggest[1])} points). Random events can also move the score, so check the report above.`));
     }

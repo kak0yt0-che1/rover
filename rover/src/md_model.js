@@ -255,7 +255,8 @@
     if (out.outcome === "lost" && out.cause === "power") r.push("The battery ran flat and the spacecraft went silent. Orbit-average power must beat the load, and the battery must carry the eclipse.");
     if (out.outcome === "success") r.push(`You returned ${out.science.toFixed(0)} science points against a target of ${sc.target}.`);
     if (out.outcome === "partial" || out.outcome === "failed") {
-      if (out.cause === "science") r.push(`Even with no failures this design could return only about ${A.science.potential.toFixed(0)} points against a target of ${sc.target}. Add or upgrade an instrument, or choose a better orbit for this objective.`);
+      if (!A.valid) r.push("The design breaks limits: " + A.problems.join(" ") + " Fix those first.");
+      else if (out.cause === "science") r.push(`Even with no failures this design could return only about ${A.science.potential.toFixed(0)} points against a target of ${sc.target}. Add or upgrade an instrument, or choose a better orbit for this objective.`);
       if (out.cause === "data") r.push(`Data was lost: ${out.lostData.toFixed(1)} GB did not fit in storage because the radio could not send it fast enough. Add a faster radio, more ground contact, or a bigger bus.`);
       if (out.cause === "ops") r.push("The design could have met the target, but events cost you days of science.");
     }

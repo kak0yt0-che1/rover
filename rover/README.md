@@ -17,7 +17,7 @@ Pick a mission, design a small spacecraft (bus, solar panels, battery, radio, in
 ## Features (each one has an automated test, see COMPLIANCE.md)
 - 3 missions x 3 difficulty levels; several different designs can win (`docs/BALANCE.md` has the numbers).
 - Launch is blocked, with the reason, when the spacecraft is too heavy or the rocket cannot reach the orbit.
-- Random events with a fixed seed: solar flare, ground-station outage, instrument glitch, wing failure, launch failure.
+- Random events: solar flare, ground-station outage, instrument glitch, wing failure, launch failure. A seed makes a mission replayable; every launch uses a new seed, and in team competition all teams share one seed.
 - Score (100 points): performance, science, resource efficiency, decision quality, teamwork.
 - Teams of 1 to 4 with roles (planner, spacecraft, science, communications); launch needs every role's approval.
 - Sandbox mode (limits only warn, unscored) and hot-seat team competition (same random events for every team, then a ranking).
@@ -40,7 +40,7 @@ node tools/e2e.js --prefix=my-repo   # same tests served under a sub-path, as on
 node tools/shots.js                  # screenshots into docs/shots
 node tools/record_demo.js            # demo video into demo/demo.webm (needs: npx playwright-core install ffmpeg)
 ```
-Deploying: see `DEPLOY.md`. Project documents: `COMPLIANCE.md`, `SELF_JUDGING.md`, `SUBMISSION.md`, `AI_USE.md`, `REFERENCES.md`, `DEMO.md`.
+Deploying: see `DEPLOY.md`. More: `model.html` (formulas), `docs/BALANCE.md`, `REFERENCES.md`, `AI_USE.md`, `DEMO.md`, `DEPLOY.md`.
 
 ## Screenshots
 `docs/shots/` (1920x1080): `02_mission_setup.png`, `05_build_valid.png`, `04_launch_blocked.png`, `06_report.png`, `08_team_roles.png`, `10_model_notes.png`, `14_rover_debrief.png`.
@@ -87,14 +87,6 @@ You are the engineer, not the driver: design a rover, write IF-THEN rules, send 
 - Opportunity stuck in a dune in 2005 (more than five weeks to escape): NASA JPL PIA07999 https://www.jpl.nasa.gov/images/pia07999-looking-back-at-purgatory-dune
 - Terrain: USGS Mars 2020 TRN CTX DTM Mosaic, built from Context Camera images from NASA's Mars Reconnaissance Orbiter; CC0. https://www.usgs.gov/data/mars-2020-terrain-relative-navigation-ctx-dtm-mosaic
 
-## Still needs a human (do not trust AI for these)
-- Power, wear and probability numbers are game values (marked "game value" in the in-game Science & sources dialog).
-- The Night Crossing note ("heaters and radioisotope warmth") in `src/missions.js` is from general knowledge: confirm it against a NASA page or reword it.
-- Terrain types: decide the final wording about AI4Mars before submitting (the code does not use AI4Mars data at all).
-- Confirm the exact official challenge title and wording on spaceappschallenge.org and use it in the submission.
-- Re-check the 2026 Submission Guide on the live site if it opens (an offline copy is in `../REQUIREMENTS_2026.md`).
-- At least two teammates should be able to explain `sim.js` and `rules.js` in plain words.
-
-## AI-use log (fill in for the submission)
-- Code in `src/`, `tools/`, `test/`, `*.html` was first drafted by Claude (Anthropic). Tested by: Olzhas Maisuly and Margulan Maratuly.
+## AI use
+Claude (Anthropic) drafted the code and texts; people tested and reviewed. Full statement in `AI_USE.md`.
 
