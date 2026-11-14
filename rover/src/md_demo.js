@@ -23,31 +23,32 @@
   const btn = (text) => [...document.querySelectorAll("button")].find((b) => new RegExp("^\\s*" + esc(text) + "\\s*$").test(b.textContent.replace(/\s*\(selected\)\s*$/, "")) || (b.querySelector("b") && b.querySelector("b").textContent.trim() === text));
   const click = (text) => { const b = btn(text); if (!b) throw new Error("demo: no button " + text); b.scrollIntoView({ block: "center" }); b.classList.add("demo-ring"); b.click(); };
   const ring = (sel) => { const e = document.querySelector(sel); if (e) { e.classList.add("demo-ring"); } };
+  const until = (fn, ms) => new Promise((res, rej) => { const t0 = Date.now(); const tick = () => (fn() ? res() : Date.now() - t0 > ms ? rej(new Error("demo: timeout waiting")) : setTimeout(tick, 100)); tick(); });
   const unring = () => document.querySelectorAll(".demo-ring").forEach((e) => e.classList.remove("demo-ring"));
 
   async function run() {
     window.scrollTo(0, 0);
     // 1. team card, challenge, name
-    showCard("Team: " + team, "NASA Space Apps Challenge 2026", "Challenge: Space Mission Design Game"); await wait(2000);
-    showCard("Design a space mission", "Six limits fight each other.", "Mass, power, budget, data, communications, time."); await wait(2000);
-    showCard("Mission Design", "Build it. Launch it. Learn why."); await wait(1600);
+    showCard("Team: " + team, "NASA Space Apps Challenge 2026", "Challenge: Space Mission Design Game"); await wait(1800);
+    showCard("Design a space mission", "Six limits fight each other.", "Mass, power, budget, data, communications, time."); await wait(1800);
+    showCard("Mission Design", "Build it. Launch it. Learn why."); await wait(1400);
     hideCard();
     // 2. start the real game
     click("Start designing"); await wait(500);
     const skip = btn("Skip the tour"); if (skip) skip.click();
     caption("Pick a rocket, an orbit and a spacecraft"); await wait(1200);
-    ring(".dash"); caption("The dashboard shows all six limits, live"); document.querySelector(".dash").scrollIntoView({ block: "start" }); await wait(2200); unring();
+    ring(".dash"); caption("The dashboard shows all six limits, live"); document.querySelector(".dash").scrollIntoView({ block: "start" }); await wait(2000); unring();
     // 3. blocked launch, then fix it
     window.scrollTo(0, 0);
     click("Polar orbit, 550 km"); caption("Blocked: this rocket cannot reach that orbit"); await wait(2000); unring();
     click("Sun-synchronous orbit, 600 km"); await wait(500); click("Dedicated small rocket"); await wait(500); click("Multispectral imager");
     caption("Fix the design, add an instrument"); await wait(1800); unring();
     // 4. launch with an event (seed fixed: the demo seed is 7 and launch adds 1)
-    window.scrollTo(0, document.body.scrollHeight); click("Launch mission"); await wait(700); unring();
-    caption("30 days fly with random events: here, two solar flares"); await wait(2800);
+    click("Launch mission"); await wait(300); unring();
+    caption("Countdown, liftoff, then 30 days with random events"); await until(() => document.querySelector(".big-total"), 14000); await wait(300);
     // 5. report with why
     const why = [...document.querySelectorAll("h3")].find((h) => /Why it went this way/.test(h.textContent)); if (why) why.scrollIntoView({ block: "center" });
-    caption("The report explains why it worked, so you can redesign"); await wait(2800);
+    caption("Stars, a score and the reasons why: then redesign"); await wait(2400);
     // 6. teams
     window.scrollTo(0, 0); caption(""); click("New mission"); await wait(500); click("4 players"); await wait(300); click("Start designing"); await wait(300);
     caption("One to four players, each with a role. Launch needs everyone's approval."); await wait(2400); unring();

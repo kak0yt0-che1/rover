@@ -15,6 +15,7 @@ Pick a mission, design a small spacecraft (bus, solar panels, battery, radio, in
 4. Read the report. Press **Redesign**, change the radio, launch again: the game shows what changed.
 
 ## Features (each one has an automated test, see COMPLIANCE.md)
+- Game feel: mission cards with art, stars (1 to 3) and 7 badges saved in your browser, a hangar with a live spacecraft drawing, a sticky GO / HOLD / NO-GO pre-launch check for the six limits, a countdown and liftoff, a day-by-day flight screen with live gauges and event alerts, optional sound (off by default), and animations that stop when your system asks for reduced motion.
 - 3 missions x 3 difficulty levels; several different designs can win (`docs/BALANCE.md` has the numbers).
 - Launch is blocked, with the reason, when the spacecraft is too heavy or the rocket cannot reach the orbit.
 - Random events: solar flare, ground-station outage, instrument glitch, wing failure, launch failure. A seed makes a mission replayable; every launch uses a new seed, and in team competition all teams share one seed.

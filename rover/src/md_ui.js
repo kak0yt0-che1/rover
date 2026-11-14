@@ -1,6 +1,6 @@
 // Mission Design UI. Reads the model in md_model.js; draws no game logic of its own.
 (function () {
-  const MD = globalThis.MR.MD, app = document.getElementById("app");
+  const MR = globalThis.MR, MD = MR.MD, app = document.getElementById("app");
   const store = {
     get: (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
     set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode: the game still works */ }
@@ -54,7 +54,7 @@
       h("div", { class: "row-actions" }, h("button", { class: "btn primary", onclick: () => { last ? end() : (G.tour++, render(true)); } }, last ? "Done" : "Next"), h("button", { class: "btn ghost", onclick: end }, "Skip the tour")));
   }
 
-  function setPhase(p) { G.phase = p; render(); window.scrollTo(0, 0); const t = app.querySelector("h1"); if (t) { t.setAttribute("tabindex", "-1"); t.focus({ preventScroll: true }); } }
+  function setPhase(p) { clearFlight(); G.phase = p; render(); window.scrollTo(0, 0); const t = app.querySelector("h1"); if (t) { t.setAttribute("tabindex", "-1"); t.focus({ preventScroll: true }); } if (p === "flight") runFlight(); }
   function startDesigning() {
     G.approved.clear(); G.delta = null; G.note = "";
     if (G.mode === "comp") {
@@ -67,15 +67,27 @@
   function setD(k, v) { G.design[k] = v; G.approved.clear(); persist(); render(true); }
 
   // ------------ setup ------------
+  const artEl = (html) => { const w = document.createElement("span"); w.className = "mcard-frame"; w.innerHTML = html; return w; };
+  const totalStars = () => Object.values(store.get("md.progress", {})).reduce((n, p) => n + (p.stars || 0), 0);
+  function badgeShelf() {
+    const have = store.get("md.badges", []);
+    return h("div", { class: "grp card" }, h("h3", {}, "Badges"),
+      h("ul", { class: "badges" }, MD.BADGES.map((b) => h("li", { class: have.includes(b.id) ? "on" : "" }, h("span", { class: "bmark", "aria-hidden": "true" }, have.includes(b.id) ? "★" : "·"), h("b", {}, b.name), h("span", {}, b.desc), h("em", {}, have.includes(b.id) ? "Earned" : "Locked")))));
+  }
   function setup() {
     const sc = G.design.scenario;
     return h("div", {},
-      h("h1", {}, "Design a space mission"),
-      h("p", { class: "dim" }, "You will pick a mission, build a small spacecraft, choose a rocket and an orbit, and watch a 30-day mission with surprises. Then you redesign and try again. All numbers are a simplified teaching model."),
+      h("section", { class: "hero" }, h("p", { class: "kicker" }, "MISSION CONTROL"), h("h1", {}, "Design a space mission"),
+        h("p", { class: "sub" }, "Build a spacecraft. Pick a rocket and an orbit. Survive 30 days of surprises. Earn stars and badges. All numbers are a simplified teaching model."),
+        h("ul", { class: "hudrow" }, h("li", {}, h("span", {}, "Stars"), h("b", {}, totalStars() + " / 9")), h("li", {}, h("span", {}, "Badges"), h("b", {}, store.get("md.badges", []).length + " / " + MD.BADGES.length)), h("li", {}, h("span", {}, "Mode"), h("b", {}, { mission: "Scored", sandbox: "Sandbox", comp: "Competition" }[G.mode])))),
       h("div", { class: "grp" }, h("h3", {}, "1. Choose a mission"),
-        h("div", { class: "sgrid" }, Object.entries(MD.SCENARIOS).map(([id, s]) =>
-          h("button", { class: "pick", "aria-pressed": sc === id, onclick: () => { G.design = MD.defaultDesign(id); G.design.difficulty = G.design.difficulty; persist(); render(); } },
-            h("b", {}, s.title), s.blurb, h("span", { class: "nums" }, "Critical: " + s.critical.join(" and ")), h("span", { class: "nums" }, s.objective))))),
+        h("div", { class: "mcards" }, Object.entries(MD.SCENARIOS).map(([id, s]) => {
+          const pr = store.get("md.progress", {})[id] || { stars: 0, best: 0 };
+          return h("button", { class: "pick mcard", "aria-pressed": sc === id, onclick: () => { G.design = MD.defaultDesign(id); G.design.difficulty = G.design.difficulty; persist(); render(true); } },
+            artEl(MR.mdArt.mission(id)),
+            h("span", { class: "pick-body" }, h("b", {}, s.title), h("span", { class: "pick-note" }, s.blurb), h("span", { class: "nums" }, s.objective), h("span", { class: "nums" }, "Critical: " + s.critical.join(" and ")),
+              h("span", { class: "best" }, "Best: ", h("span", { class: "starsmini", "aria-hidden": "true" }, "★".repeat(pr.stars) + "☆".repeat(3 - pr.stars)), pr.best ? ` ${pr.stars} of 3 stars, ${pr.best} points` : " not flown yet")));
+        }))),
       h("div", { class: "grp" }, h("h3", {}, "2. Difficulty"),
         h("div", { class: "chips" }, Object.entries(MD.DIFFICULTY).map(([id, d]) =>
           h("button", { class: "pick", "aria-pressed": G.design.difficulty === id, onclick: () => { G.design.difficulty = id; persist(); render(); } }, h("b", {}, d.name),
@@ -94,7 +106,7 @@
       h("div", { class: "scenario-brief hint" }, h("b", {}, MD.SCENARIOS[sc].title + ": "), MD.SCENARIOS[sc].hint, h("br"), h("span", { class: "dim small" }, MD.SCENARIOS[sc].real)),
       G.note ? h("div", { class: "msg", role: "status" }, G.note) : null,
       h("button", { class: "btn primary big", onclick: startDesigning }, "Start designing"),
-      leaderboard(), savedDesigns());
+      badgeShelf(), leaderboard(), savedDesigns());
   }
 
   // ------------ build ------------
@@ -145,24 +157,31 @@
       h("div", { class: "row" }, h("span", {}, h("b", {}, label), crit(key), h("span", { class: "stat" + (over ? " bad" : "") }, over ? "over the limit" : used / (cap || 1) > 0.9 ? "tight" : "ok")), h("span", {}, text)),
       h("div", { class: "bar " + (over ? "bad" : used / (cap || 1) > 0.9 ? "warn" : "") }, h("i", { style: `width:${clampPct((used / (cap || 1)) * 100)}%` })),
       h("p", { class: "why" }, WHY[key]));
-    return h("aside", { class: "dash card" }, craftSVG(G.design, A), h("h3", {}, "Mission dashboard"),
+    return h("aside", { class: "dash card hangar" }, craftSVG(G.design, A), h("div", { class: "hudcol" }, h("h3", {}, "Mission dashboard"), h("div", { class: "hint" }, h("b", {}, sc.title + ": "), sc.objective, " ", sc.hint), h("div", { class: "hudgrid" },
       res("mass", "Mass", A.mass.used, A.mass.cap || 1, A.mass.cap ? `${num(A.mass.used)} / ${A.mass.cap} kg` : `${num(A.mass.used)} kg, this rocket cannot reach this orbit`, A.mass.used > A.mass.cap),
       res("power", "Power", A.power.load, Math.max(A.power.gen, 0.1), `use ${num(A.power.load)} W / make ${num(A.power.gen)} W`, A.power.gen < A.power.load),
       res("budget", "Budget", A.budget.used, A.budget.cap, `${num(A.budget.used)} / ${num(A.budget.cap)} M`, A.budget.used > A.budget.cap),
       res("data", "Data per day", A.data.perDay, Math.max(A.comms.downGB, 0.01), `make ${num(A.data.perDay, 2)} / send ${num(A.comms.downGB, 2)} GB`, A.comms.ratio < 0.5),
       res("comms", "Comms", A.comms.contactMin, 160, `${num(A.comms.contactMin, 0)} min/day at ${A.comms.rate} Mbps`, false),
-      res("time", "Time to launch", A.time.weeks, A.time.deadline, `${num(A.time.weeks, 0)} / ${num(A.time.deadline, 0)} weeks`, A.time.weeks > A.time.deadline),
+      res("time", "Time to launch", A.time.weeks, A.time.deadline, `${num(A.time.weeks, 0)} / ${num(A.time.deadline, 0)} weeks`, A.time.weeks > A.time.deadline)),
       h("p", { class: "small" }, h("b", {}, "Science possible: "), `${num(A.science.potential, 0)} points (target ${sc.target})`),
       h("div", { class: "bar " + (A.science.potential >= sc.target ? "" : "warn") }, h("i", { style: `width:${clampPct(A.science.potential / sc.target * 100)}%` })),
       A.problems.map((p) => h("div", { class: "msg" }, p)),
-      A.warnings.map((p) => h("div", { class: "msg warn" }, p)));
+      A.warnings.map((p) => h("div", { class: "msg warn" }, p))));
+  }
+  const GNG = { mass: "Mass", power: "Power", budget: "Budget", data: "Data", comms: "Comms", time: "Time" };
+  function launchBar(A, canGo, note) {
+    const gng = MD.goNoGo(A);
+    return h("div", { class: "launchbar", role: "region", "aria-label": "Pre-launch check" },
+      h("ul", { class: "gng" }, Object.keys(GNG).map((k) => h("li", { class: "gng-" + gng[k].toLowerCase().replace("-", "") }, h("i", { "aria-hidden": "true" }), h("span", {}, GNG[k]), h("b", {}, gng[k])))),
+      h("div", { class: "lb-actions" }, note, h("button", { class: "btn primary big go-btn", disabled: !canGo, onclick: launch }, "Launch mission")));
   }
 
   function build() {
     const d = G.design, sc = MD.SCENARIOS[d.scenario], A = MD.analyse(d), roles = Object.keys(MD.ROLES);
     const owned = G.role === "all" ? ["launcher", "orbit", "ground", "bus", "solar", "battery", "prop", "payloads", "comms"] : roleKeys(G.role);
     const banner = G.mode === "sandbox" ? "Sandbox: limits only warn here and nothing is scored." : G.mode === "comp" && G.comp ? `${G.compNames[G.comp.idx]} is designing (team ${G.comp.idx + 1} of ${G.compN}). Same mission and same random events for every team. One launch per team.` : "";
-    const panel = [banner ? h("div", { class: "msg", role: "status" }, banner) : null, G.note ? h("div", { class: "msg", role: "status" }, G.note) : null, tourCard(), h("div", { class: "hint" }, h("b", {}, sc.title + ": "), sc.objective, " ", sc.hint)];
+    const panel = [banner ? h("div", { class: "msg", role: "status" }, banner) : null, G.note ? h("div", { class: "msg", role: "status" }, G.note) : null, tourCard()];
     if (G.players > 1) {
       panel.push(h("div", { class: "roles", role: "tablist" }, roles.map((r) => h("button", { role: "tab", "aria-selected": G.role === r, class: G.approved.has(r) ? "ok" : "", onclick: () => { G.role = r; render(); } }, `${MD.ROLES[r].name}`))));
       const r = MD.ROLES[G.role];
@@ -177,14 +196,14 @@
     return h("div", {},
       h("div", { class: "steps" }, h("span", {}, "1 Mission"), h("span", { class: "on", "aria-current": "step" }, "2 Design"), h("span", {}, "3 Launch and results")),
       h("h1", {}, "Design your spacecraft"),
-      h("div", { class: "md-grid" }, h("div", { class: "panel-col" }, panel), dashboard(A, sc)),
+      dashboard(A, sc),
+      h("div", { class: "panel-col" }, panel),
       h("div", { class: "row-actions" },
         h("button", { class: "btn", onclick: () => setPhase("setup") }, "Back to missions"),
         h("button", { class: "btn", onclick: () => saveDesign(A) }, "Save this design"),
         G.mode === "comp" ? null : h("button", { class: "btn", onclick: shareLink }, "Copy share link"),
-        h("button", { class: "btn primary big", disabled: !canGo, onclick: launch }, "Launch mission"),
-        G.shareUrl ? h("input", { class: "txt", readonly: true, value: G.shareUrl, "aria-label": "Share link", style: "min-width:260px", onfocus: (e) => e.target.select() }) : null,
-        G.mode === "sandbox" && !A.valid ? h("span", { class: "dim small", role: "status" }, "Sandbox: this design breaks " + A.problems.length + " limit(s). You can still launch it.") : !A.valid ? h("span", { class: "dim small", role: "status" }, canGoNote + " Fix the items marked in the dashboard first.") : G.players > 1 && !canGo ? h("span", { class: "dim small" }, "Every role must approve.") : null));
+        G.shareUrl ? h("input", { class: "txt", readonly: true, value: G.shareUrl, "aria-label": "Share link", style: "min-width:260px", onfocus: (e) => e.target.select() }) : null),
+      launchBar(A, canGo, G.mode === "sandbox" && !A.valid ? h("span", { class: "dim small", role: "status" }, "Sandbox: this design breaks " + A.problems.length + " limit(s). You can still launch it.") : !A.valid ? h("span", { class: "dim small", role: "status" }, canGoNote + " Fix the items marked in the dashboard first.") : G.players > 1 && !canGo ? h("span", { class: "dim small" }, "Every role must approve.") : null));
   }
   function roleKeys(r) { return { planner: ["launcher", "orbit", "ground"], craft: ["bus", "solar", "battery", "prop"], science: ["payloads"], comms: ["comms"] }[r]; }
 
@@ -202,7 +221,53 @@
     const cur = { design: JSON.parse(JSON.stringify(G.design)), score: r.score, outcome: r.outcome };
     if (G.mode === "mission" && r.outcome !== "rejected") { const key = "md.last." + sc; G.delta = MD.delta(store.get(key, null), cur); store.set(key, cur); }
     if (G.mode === "comp") G.comp.entries[G.comp.idx] = { name: G.compNames[G.comp.idx], design: cur.design, score: r.score, outcome: r.outcome, science: r.science, cost: r.analysis.budget.used };
-    setPhase("result");
+    G.newBadges = [];
+    if (G.mode === "mission" && r.outcome !== "rejected") {
+      const prog = store.get("md.progress", {}), st = MD.stars(r.outcome, r.score.total), p0 = prog[sc] || { stars: 0, best: 0 };
+      prog[sc] = { stars: Math.max(p0.stars, st), best: Math.max(p0.best, r.score.total) }; store.set("md.progress", prog);
+      const have = store.get("md.badges", []); G.newBadges = MD.badgesFor(G.design, r).filter((b) => !have.includes(b)); store.set("md.badges", have.concat(G.newBadges));
+    }
+    if (reduced() || !r.days.length && r.cause !== "launch") { setPhase("result"); soundFor(r); } else setPhase("flight");
+  }
+  const reduced = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const soundFor = (r) => MR.sfx(r.outcome === "success" ? "win" : r.outcome === "partial" ? "star" : "lose");
+  function clearFlight() { (G.ft || []).forEach(clearTimeout); if (G.fi) clearInterval(G.fi); G.ft = []; G.fi = null; }
+  function finishFlight() { clearFlight(); setPhase("result"); soundFor(G.result); }
+  function flight() {
+    const gauge = (id, label) => h("div", { class: "fl-g" }, h("span", {}, label), h("div", { class: "bar" }, h("i", { id: id + "Bar", style: "width:0%" })), h("b", { id }, "0"));
+    const scene = h("div", { id: "liftoff", class: "fl-scene" }); scene.innerHTML = MR.mdArt.liftoff(G.design.launcher);
+    return h("div", { class: "flight" },
+      h("div", { class: "steps" }, h("span", {}, "1 Mission"), h("span", {}, "2 Design"), h("span", { class: "on", "aria-current": "step" }, "3 Launch and results")),
+      h("h1", {}, "Launch"),
+      h("div", { class: "fl-grid" }, scene,
+        h("div", { class: "fl-hud" }, h("div", { id: "flCount", class: "fl-count", "aria-live": "polite" }, "T-3"),
+          gauge("flDay", "Mission day"), gauge("flBat", "Battery"), gauge("flSci", "Science vs target"), gauge("flSto", "Onboard storage"),
+          h("ul", { id: "flLog", class: "fl-log", "aria-live": "polite" }),
+          h("button", { class: "btn", onclick: finishFlight }, "Skip to report"))));
+  }
+  function runFlight() {
+    const Rz = G.result, sc = MD.SCENARIOS[G.design.scenario], bus = MD.BUSES[G.design.bus], $ = (id) => document.getElementById(id);
+    const say = (t) => { const e = $("flCount"); if (e) e.textContent = t; };
+    const log = (t) => { const ul = $("flLog"); if (ul) ul.prepend(h("li", {}, t)); };
+    const T = (ms, fn) => G.ft.push(setTimeout(fn, ms));
+    const setG = (id, text, pct) => { const e = $(id), b = $(id + "Bar"); if (e) e.textContent = text; if (b) b.style.width = Math.max(0, Math.min(100, pct)) + "%"; };
+    T(0, () => { say("T-3"); MR.sfx("count"); }); T(500, () => { say("T-2"); MR.sfx("count"); }); T(1000, () => { say("T-1"); MR.sfx("count"); });
+    T(1500, () => { say("LIFTOFF"); const sv = $("liftoff") && $("liftoff").firstChild; if (sv) sv.classList.add("go"); MR.sfx("launch"); });
+    if (Rz.cause === "launch") { T(2700, () => { say("LAUNCH FAILURE"); log(Rz.reasons[0]); MR.sfx("lose"); }); T(4300, finishFlight); return; }
+    T(2500, () => {
+      const sceneEl = $("liftoff"); if (sceneEl) { sceneEl.classList.add("orbit"); sceneEl.innerHTML = MR.mdArt.craft(G.design); }
+      let i = 0;
+      G.fi = setInterval(() => {
+        const x = Rz.days[i];
+        if (!x) { clearInterval(G.fi); G.fi = null; say(Rz.outcome === "lost" ? "SIGNAL LOST" : "MISSION END"); T(600, finishFlight); return; }
+        say("DAY " + x.day);
+        setG("flDay", x.day + " / " + sc.days, (x.day / sc.days) * 100); setG("flBat", x.batPct + "%", x.batPct);
+        setG("flSci", Math.round(x.science) + " / " + sc.target, (x.science / sc.target) * 100); setG("flSto", x.storage.toFixed(1) + " GB", (x.storage / bus.storage) * 100);
+        const sEl = $("liftoff"); if (sEl) { sEl.classList.toggle("flare", !!x.flare); sEl.classList.toggle("outage", !!x.outage || !!x.glitch); }
+        Rz.events.filter((e) => e.day === x.day).forEach((e) => { log("Day " + e.day + ": " + e.title + ". " + e.text); MR.sfx("event"); });
+        i++;
+      }, 70);
+    });
   }
   function nextTeam() {
     const df = G.design.difficulty, sc = G.design.scenario;
@@ -229,6 +294,19 @@
 
   const OUT = { success: "Mission success", partial: "Partial success", failed: "Mission fell short", lost: "Spacecraft lost", rejected: "Design rejected before launch" };
 
+  function starsPanel(R) {
+    const n = MD.stars(R.outcome, R.score.total), nb = (G.newBadges || []).map((id) => MD.BADGES.find((b) => b.id === id)).filter(Boolean);
+    return h("div", { class: "starpanel" },
+      h("ul", { class: "starrow", "aria-hidden": "true" }, [1, 2, 3].map((i) => h("li", { class: i <= n ? "on" : "", style: "animation-delay:" + i * 220 + "ms" }, "★"))),
+      h("p", { class: "stars-text" }, n + " of 3 stars" + (n === 3 ? ": flawless" : n === 2 ? ". Score 92 or more for the third star." : n === 1 ? ": partial success" : "")),
+      nb.length ? h("div", { class: "badgebox" }, nb.map((b) => h("div", { class: "badge-new", role: "status" }, h("b", {}, "New badge: " + b.name), h("span", {}, b.desc)))) : null);
+  }
+  function countUp(el) {
+    const node = el.firstChild; if (!node) return; const end = parseInt(node.nodeValue, 10); if (!(end > 0)) return;
+    const t0 = performance.now(); el.setAttribute("aria-label", "Score " + end + " of 100");
+    const step = (t) => { const k = Math.min(1, (t - t0) / 700); node.nodeValue = String(Math.round(end * (1 - Math.pow(1 - k, 3)))); if (k < 1) requestAnimationFrame(step); };
+    node.nodeValue = "0"; requestAnimationFrame(step);
+  }
   function result() {
     const R = G.result, sc = MD.SCENARIOS[G.design.scenario], S = R.score, p = S.parts, sandbox = G.mode === "sandbox", comp = G.mode === "comp";
     return h("div", {},
@@ -237,6 +315,7 @@
       sandbox ? h("p", { class: "msg", role: "status" }, "Sandbox run. Science returned: " + R.science.toFixed(0) + " of " + sc.target + ". Nothing is scored.") : h("div", { class: "big-total" }, S.total, h("span", { class: "dim small" }, " / 100")),
       sandbox ? null : h("div", { class: "score" }, [["Mission performance", p.performance, 30], ["Science value", p.science, 20], ["Resource efficiency", p.efficiency, 20], ["Decision quality", p.decisions, 15], ["Teamwork", p.collab, 15]]
         .map(([n, v, m]) => h("div", {}, h("b", {}, `${v}/${m}`), h("span", {}, n)))),
+      sandbox ? null : starsPanel(R),
       R.days.length ? chart(R, sc) : null,
       G.delta ? deltaPanel(G.delta) : null,
       h("div", { class: "grp" }, h("h3", {}, "Why it went this way"),
@@ -339,9 +418,13 @@
 
   function render(keepScroll) {
     const y = window.scrollY;
-    app.replaceChildren(G.phase === "setup" ? setup() : G.phase === "build" ? build() : G.phase === "rank" ? rank() : G.phase === "compare" ? compare() : result());
+    app.replaceChildren(G.phase === "setup" ? setup() : G.phase === "build" ? build() : G.phase === "flight" ? flight() : G.phase === "rank" ? rank() : G.phase === "compare" ? compare() : result());
+    if (G.phase === "result" && !keepScroll && !reduced()) { const bt = app.querySelector(".big-total"); if (bt) countUp(bt); }
     if (keepScroll) window.scrollTo(0, y);
   }
+  app.addEventListener("click", (e) => { const b = e.target.closest && e.target.closest("button"); if (b && !b.disabled) MR.sfx(b.classList.contains("pick") ? "pick" : "click"); });
+  const snd = document.getElementById("sndBtn");
+  if (snd) { const paint = () => { snd.textContent = "Sound: " + (MR.sfxOn() ? "on" : "off"); snd.setAttribute("aria-pressed", String(MR.sfxOn())); }; snd.addEventListener("click", () => { MR.sfxToggle(); paint(); }); paint(); }
   globalThis.MR.mdDebug = { G, render, launch };
   render();
 })();

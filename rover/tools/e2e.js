@@ -18,8 +18,8 @@ const SOL = {
 const TITLE = { coast: "Coastal Watch", aurora: "Aurora Watch", moon: "Moon Scout" };
 
 const results = []; let browser, base;
-async function newPage(viewport = { width: 1366, height: 768 }, problems) {
-  const ctx = await browser.newContext({ viewport }); const page = await ctx.newPage();
+async function newPage(viewport = { width: 1366, height: 768 }, problems, motion = false) {
+  const ctx = await browser.newContext({ viewport, reducedMotion: motion ? "no-preference" : "reduce" }); const page = await ctx.newPage();
   const errs = problems || [];
   page.on("console", (m) => { if (m.type() === "error") errs.push("console: " + m.text()); });
   page.on("pageerror", (e) => errs.push("pageerror: " + e.message));

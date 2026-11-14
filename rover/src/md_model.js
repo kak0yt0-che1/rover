@@ -333,6 +333,45 @@
       sameDesign: changes.length === 0 && prev.design.difficulty === cur.design.difficulty };
   };
 
+  // ---------- progression: stars and badges ----------
+  // 0 stars: lost or fell short, 1: partial, 2: success, 3: success with 92 or more points
+  MD.stars = function (outcome, total) { return outcome === "success" ? (total >= 92 ? 3 : 2) : outcome === "partial" ? 1 : 0; };
+  MD.BADGES = [
+    { id: "first", name: "First flight", desc: "Complete a mission successfully." },
+    { id: "thrifty", name: "Thrifty", desc: "Succeed using 70% or less of the budget." },
+    { id: "storm", name: "Storm rider", desc: "Succeed after two or more random events." },
+    { id: "light", name: "Lightweight", desc: "Succeed with a spacecraft at 40% or less of the rocket's capacity." },
+    { id: "allhands", name: "All hands", desc: "Get 3 stars with every role's goal met." },
+    { id: "hardliner", name: "Hardliner", desc: "Succeed on Hard difficulty." },
+    { id: "moon", name: "Lunar arrival", desc: "Succeed in the Moon Scout mission." },
+  ];
+  // Which badges a finished mission earns. out is the result of MD.simulate.
+  MD.badgesFor = function (d, out) {
+    if (!out || out.outcome !== "success") return [];
+    const A = out.analysis, got = ["first"], stars = MD.stars(out.outcome, out.score.total);
+    if (A.budget.used <= 0.7 * A.budget.cap) got.push("thrifty");
+    if (out.events.length >= 2) got.push("storm");
+    if (A.mass.cap > 0 && A.mass.used <= 0.4 * A.mass.cap) got.push("light");
+    if (stars === 3 && out.score.roles.every((r) => r.ok)) got.push("allhands");
+    if (d.difficulty === "hard") got.push("hardliner");
+    if (d.scenario === "moon") got.push("moon");
+    return got;
+  };
+
+  // ---------- go / no-go: one light per resource for the pre-launch check ----------
+  // GO = fine, HOLD = allowed but risky, NO-GO = a scored mission will not launch.
+  MD.goNoGo = function (A) {
+    const light = (bad, warn) => (bad ? "NO-GO" : warn ? "HOLD" : "GO");
+    return {
+      mass: light(A.mass.cap === 0 || A.mass.used > A.mass.cap, A.mass.margin < 0.05),
+      power: light(A.power.gen < A.power.load || A.power.batteryUse > 0.8, A.power.margin < 0.15 || A.power.batteryUse > 0.6),
+      budget: light(A.budget.used > A.budget.cap, A.budget.used > 0.95 * A.budget.cap),
+      data: light(false, A.comms.ratio < 0.8),
+      comms: light(false, A.comms.ratio < 0.5),
+      time: light(A.time.weeks > A.time.deadline, A.time.weeks > 0.95 * A.time.deadline),
+    };
+  };
+
   // ---------- competition ----------
   // Teams fly the same scenario with the same seed. Returns teams sorted by score, ties broken by lower cost.
   MD.rank = function (teams) {

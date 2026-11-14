@@ -292,4 +292,50 @@ module.exports = async function (H) {
     expect((await plain.locator(".demo-cap, .demo-card").count()) === 0, "demo UI must not show in normal play");
     await page.ctx.close(); await plain.ctx.close();
   });
+  // 17. the flight: countdown, liftoff, the player's own spacecraft in orbit, skip works (motion on)
+  await test("flight screen plays and can be skipped", async (problems) => {
+    const page = await newPage({ width: 1366, height: 768 }, problems, true);
+    await startScenario(page, "coast", "Normal");
+    await setDesign(page, SOL.coast[0]);
+    await btn(page, "Launch mission").click();
+    await page.locator(".fl-count", { hasText: "T-3" }).waitFor({ timeout: 2000 });
+    await page.locator(".fl-count", { hasText: "LIFTOFF" }).waitFor({ timeout: 3000 });
+    await page.locator('.fl-scene.orbit svg.craft').waitFor({ timeout: 4000 });
+    await page.locator("#flLog").waitFor();
+    await btn(page, "Skip to report").click();
+    await page.locator(".big-total").waitFor({ timeout: 3000 });
+    // second flight runs to its natural end
+    await btn(page, "Fly again (new surprises)").click();
+    await page.locator(".big-total").waitFor({ timeout: 14000 });
+    await page.ctx.close();
+  });
+
+  // 18. go / no-go lights, stars, badges, progress on the mission card
+  await test("go/no-go lights, stars, badge and saved progress", async (problems) => {
+    const page = await newPage({ width: 1366, height: 768 }, problems);
+    await startScenario(page, "coast", "Normal");
+    await setDesign(page, SOL.coast[0]);
+    expect((await page.locator(".gng li b", { hasText: "GO" }).count()) === 6, "all six lights should be GO");
+    await pick(page, "Lunar orbit (trans-lunar injection)").click();
+    expect((await page.locator(".gng-nogo", { hasText: "NO-GO" }).count()) >= 1, "an unreachable orbit must show a NO-GO light");
+    await pick(page, "Sun-synchronous orbit, 600 km").click();
+    await btn(page, "Launch mission").click();
+    await page.locator(".starrow").waitFor();
+    expect((await page.locator(".stars-text").innerText()).includes("of 3 stars"), "star text missing");
+    expect((await page.locator(".badge-new", { hasText: "First flight" }).count()) === 1, "first badge expected");
+    await btn(page, "New mission").click();
+    expect((await page.locator(".mcard", { hasText: "Coastal Watch" }).innerText()).includes("points"), "mission card should show best score");
+    expect((await page.locator(".badges li.on", { hasText: "First flight" }).count()) === 1, "badge shelf should show the earned badge");
+    await page.ctx.close();
+  });
+
+  // 19. sound toggle button works and is remembered
+  await test("sound toggle", async (problems) => {
+    const page = await newPage({ width: 1366, height: 768 }, problems);
+    await page.goto(H.getBase() + "mission.html"); await page.evaluate(() => { try { localStorage.clear(); } catch (e) {} }); await page.reload();
+    const b = page.locator("#sndBtn"); expect((await b.innerText()) === "Sound: off", "starts off");
+    await b.click(); expect((await b.innerText()) === "Sound: on", "turns on");
+    await page.reload(); expect((await page.locator("#sndBtn").innerText()) === "Sound: on", "remembered");
+    await page.ctx.close();
+  });
 };

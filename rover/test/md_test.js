@@ -69,6 +69,13 @@ ok(MD.simulate(bad, 1, { sandbox: true }).reasons[0].startsWith("Sandbox run"), 
   ok(MD.delta({ design: a, score: ra.score, outcome: ra.outcome }, { design: a, score: ra.score, outcome: ra.outcome }).sameDesign, "same design is flagged"); }
 // 12. ranking: higher score first, cheaper wins a tie
 { const r = MD.rank([{ n: "A", score: { total: 80 }, cost: 9 }, { n: "B", score: { total: 90 }, cost: 12 }, { n: "C", score: { total: 80 }, cost: 7 }]); ok(r.map((x) => x.n).join("") === "BCA", "ranking order"); }
+// 14. stars, badges, go/no-go
+ok(MD.stars("success", 95) === 3 && MD.stars("success", 80) === 2 && MD.stars("partial", 99) === 1 && MD.stars("lost", 10) === 0, "star thresholds");
+{ const dd = D("coast", { launcher: "small", orbit: "sso", bus: "u6", solar: "wings", battery: "m", comms: "sband", payloads: ["multi", "camera"], ground: "single" }); const o = MD.simulate(dd, 8);
+  const got = MD.badgesFor(dd, o); ok(got.includes("first") && got.includes("storm") && !got.includes("moon") && !got.includes("hardliner"), "badges for the demo run: " + got);
+  ok(MD.badgesFor(dd, MD.simulate(D("coast", { launcher: "rideshare", orbit: "polar" }), 1)).length === 0, "no badges without a success");
+  const gg = MD.goNoGo(MD.analyse(dd)); ok(Object.values(gg).every((v) => v === "GO"), "reference design is all GO: " + JSON.stringify(gg)); }
+{ const gg = MD.goNoGo(MD.analyse(D("coast", { launcher: "rideshare", orbit: "polar" }))); ok(gg.mass === "NO-GO", "unreachable orbit is NO-GO on mass"); }
 // 13. the demo mode seed (7, launch adds 1) shows events and a success on the real model
 { const dd = D("coast", { launcher: "small", orbit: "sso", bus: "u6", solar: "wings", battery: "m", comms: "sband", payloads: ["multi", "camera"], ground: "single" }); const o = MD.simulate(dd, 8); ok(o.outcome === "success" && o.events.length >= 2, "demo seed 8 gives a success with events: " + o.outcome + " " + o.events.length); }
 console.log(report.join("\n"));

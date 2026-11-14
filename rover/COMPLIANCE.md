@@ -23,8 +23,8 @@ Status: done / partial / missing. Proof = test name (in `tools/e2e_tests.js` unl
 | Sandbox mode | done | "sandbox" test |
 | Leaderboard | partial | local to the browser only |
 | Save, share and compare designs | done | "share link", "compare two saved designs", "save, reload, load back" tests |
-| Interactive vehicle visualisation | partial | 2D drawing changes with the choices (`05_build_valid.png`); not 3D |
-| Real-time dashboard | partial | updates on every choice; the mission chart is drawn after the run, not animated |
+| Interactive vehicle visualisation | partial | 2D drawing changes with the choices and flies in the flight screen (`05_build_valid.png`); not 3D |
+| Real-time dashboard | done | updates on every choice (hangar and GO/NO-GO bar); the flight screen plays the 30 days with live gauges ("flight screen plays" test) |
 | Final post-simulation report | partial | on screen only; no printable or exportable file |
 | Educational: explanations, short tutorial, why | done | "tour" test; why lines; "model notes page" test |
 | Accessible to beginners | partial | valid starter designs, tour, axe clean. No testing with real beginners |

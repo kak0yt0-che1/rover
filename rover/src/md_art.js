@@ -119,4 +119,42 @@
     },
   };
   MR.mdArt.icon = function (group, id) { const html = (ICON[group] && ICON[group][id]) || ""; const el = document.createElement("span"); el.className = "pick-icon"; el.innerHTML = html; return el; };
+
+  // ---------- mission card art (320 x 150) ----------
+  const sat = (x, y, k) => '<g transform="translate(' + x + " " + y + ") scale(" + k + ')"><rect x="-6" y="-5" width="12" height="10" rx="1.5" fill="' + HULL + '" stroke="' + ACC + '" stroke-width="1.5"/><rect x="-22" y="-4" width="14" height="8" fill="' + PANEL + '" stroke="' + DIM + '"/><rect x="8" y="-4" width="14" height="8" fill="' + PANEL + '" stroke="' + DIM + '"/></g>';
+  const stars2 = (n, seed) => { let o = "", a = seed; for (let i = 0; i < n; i++) { a = (a * 9301 + 49297) % 233280; const x = (a / 233280) * 320; a = (a * 9301 + 49297) % 233280; const y = (a / 233280) * 100; o += '<circle cx="' + x.toFixed(0) + '" cy="' + y.toFixed(0) + '" r="' + (i % 4 === 0 ? 1.5 : 0.9) + '" fill="' + (i % 2 ? "#888" : "#ccc") + '"/>'; } return o; };
+  MR.mdArt.mission = function (id) {
+    let g = '<rect width="320" height="150" fill="#0e0f12"/>' + stars2(26, id.length * 77 + 5);
+    if (id === "coast") {
+      g += '<path d="M0 98 Q60 88 110 104 Q160 118 210 108 Q270 96 320 110 V150 H0Z" fill="#17222e"/>';
+      for (let i = 0; i < 5; i++) g += '<path d="M' + (20 + i * 62) + " " + (122 + (i % 2) * 8) + ' q10 -6 20 0 t20 0" fill="none" stroke="#2f4258" stroke-width="2"/>';
+      g += '<path d="M0 96 Q30 84 62 96 Q86 106 100 120 L0 150Z" fill="#2c2f33"/><path d="M0 96 Q30 84 62 96 Q86 106 100 120" fill="none" stroke="' + ACC2 + '" stroke-width="2"/>';
+      g += '<path d="M236 32 L70 100 M236 32 L112 114" stroke="' + ACC + '" stroke-dasharray="3 5" opacity=".8"/>' + sat(236, 32, 1.3);
+    } else if (id === "aurora") {
+      g += '<circle cx="160" cy="330" r="236" fill="#161c24" stroke="#2e3a4d" stroke-width="2"/>';
+      [[110, ACC, 0.9], [150, ACC2, 0.75], [190, ACC, 0.8], [226, ACC2, 0.6]].forEach(([x, c, o], i) => { g += '<path d="M' + x + " 112 C" + (x - 14) + " 80 " + (x + 14) + " " + (60 - i * 6) + " " + x + " " + (34 + i * 4) + '" fill="none" stroke="' + c + '" stroke-width="7" stroke-linecap="round" opacity="' + o + '"/>'; });
+      g += '<ellipse cx="160" cy="112" rx="120" ry="14" fill="none" stroke="' + DIM + '" stroke-dasharray="4 5" opacity=".6"/>' + sat(262, 44, 1.2);
+    } else {
+      g += '<circle cx="232" cy="84" r="52" fill="#25272b" stroke="#3b3e44" stroke-width="2"/>';
+      [[214, 70, 9], [246, 98, 12], [236, 58, 5], [208, 100, 6], [258, 72, 4]].forEach(([x, y, r]) => { g += '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="#1c1d20" stroke="#34373c"/>'; });
+      g += '<ellipse cx="232" cy="84" rx="80" ry="22" fill="none" stroke="' + ACC + '" stroke-dasharray="4 5" transform="rotate(-18 232 84)"/>' + sat(172, 106, 1.1);
+      g += '<circle cx="46" cy="104" r="20" fill="#1d2b3c" stroke="#33506f" stroke-width="2"/><path d="M34 98 q8 -6 14 2 t10 4" fill="none" stroke="#3d6a4e" stroke-width="3"/>';
+    }
+    return '<svg viewBox="0 0 320 150" class="mcard-art" aria-hidden="true" focusable="false">' + g + "</svg>";
+  };
+
+  // ---------- liftoff scene (320 x 360) for the flight screen ----------
+  MR.mdArt.liftoff = function (launcherId) {
+    const k = { rideshare: 0.85, small: 1, medium: 1.2 }[launcherId] || 1;
+    const rocket = '<g class="rocket"><g transform="translate(160 262) scale(' + k + ')">' +
+      '<path d="M0 -92 C16 -70 20 -40 20 0 V40 H-20 V0 C-20 -40 -16 -70 0 -92Z" fill="#d8d8da" stroke="' + INK + '" stroke-width="2"/>' +
+      '<path d="M0 -92 C10 -80 14 -68 15 -58 H-15 C-14 -68 -10 -80 0 -92Z" fill="' + ACC + '"/>' +
+      '<circle cx="0" cy="-30" r="9" fill="#111" stroke="' + ACC2 + '" stroke-width="3"/>' +
+      '<path d="M-20 8 L-38 44 L-20 38Z M20 8 L38 44 L20 38Z" fill="' + ACC + '"/><rect x="-20" y="40" width="40" height="6" fill="#555"/>' +
+      '<g class="flame"><path d="M-11 46 L11 46 L0 94Z" fill="' + ACC + '"/><path d="M-6 46 L6 46 L0 74Z" fill="' + ACC2 + '"/></g></g></g>';
+    let sky = ""; for (let i = 0; i < 22; i++) sky += '<circle class="streak" cx="' + ((i * 53) % 320) + '" cy="' + ((i * 37) % 300) + '" r="' + (i % 3 ? 1 : 1.6) + '" fill="#aaa" style="animation-delay:' + (i % 7) * 0.12 + 's"/>';
+    return '<svg viewBox="0 0 320 360" class="liftoff" role="img" aria-label="Your rocket lifting off">' +
+      '<rect width="320" height="360" fill="#0e0f12"/>' + sky + '<g class="smoke"><circle cx="130" cy="330" r="16" fill="#2a2a2c"/><circle cx="190" cy="334" r="20" fill="#2a2a2c"/><circle cx="160" cy="338" r="24" fill="#333"/></g>' +
+      rocket + '<rect x="0" y="330" width="320" height="30" fill="#17171a"/><path d="M0 330 H320" stroke="' + ACC + '" stroke-width="2"/></svg>';
+  };
 })();
