@@ -49,7 +49,7 @@
       h("div", { class: "row-actions" }, h("button", { class: "btn primary", onclick: () => { last ? end() : (G.tour++, render(true)); } }, last ? "Done" : "Next"), h("button", { class: "btn ghost", onclick: end }, "Skip the tour")));
   }
 
-  function setPhase(p) { G.phase = p; render(); window.scrollTo(0, 0); }
+  function setPhase(p) { G.phase = p; render(); window.scrollTo(0, 0); const t = app.querySelector("h1"); if (t) { t.setAttribute("tabindex", "-1"); t.focus({ preventScroll: true }); } }
   function setD(k, v) { G.design[k] = v; G.approved.clear(); persist(); render(true); }
 
   // ------------ setup ------------
@@ -119,7 +119,7 @@
   function dashboard(A, sc) {
     const crit = (k) => sc.critical.includes(k) ? h("span", { class: "crit" }, "critical") : null;
     const res = (key, label, used, cap, text, over) => h("div", { class: "res" },
-      h("div", { class: "row" }, h("span", {}, h("b", {}, label), crit(key)), h("span", {}, text)),
+      h("div", { class: "row" }, h("span", {}, h("b", {}, label), crit(key), h("span", { class: "stat" + (over ? " bad" : "") }, over ? "over the limit" : used / (cap || 1) > 0.9 ? "tight" : "ok")), h("span", {}, text)),
       h("div", { class: "bar " + (over ? "bad" : used / (cap || 1) > 0.9 ? "warn" : "") }, h("i", { style: `width:${clampPct((used / (cap || 1)) * 100)}%` })),
       h("p", { class: "why" }, WHY[key]));
     return h("aside", { class: "dash card" }, craftSVG(G.design), h("h3", {}, "Mission dashboard"),
@@ -148,15 +148,17 @@
     if (G.players > 1) panel.push(h("div", { class: "row-actions" },
       h("button", { class: "btn", onclick: () => { G.approved.has(G.role) ? G.approved.delete(G.role) : G.approved.add(G.role); render(true); } }, G.approved.has(G.role) ? "Take back approval" : `Approve as ${MD.ROLES[G.role].name}`),
       h("span", { class: "dim small" }, `Approved: ${G.approved.size} of ${roles.length}. Changing any choice clears approvals, so the team talks again.`)));
+    const canGoNote = A.valid ? "" : "Launch is blocked: " + A.problems.length + " problem(s) to fix.";
     const canGo = A.valid && (G.players === 1 || G.approved.size === roles.length);
     return h("div", {},
-      h("div", { class: "steps" }, h("span", {}, "1 Mission"), h("span", { class: "on" }, "2 Design"), h("span", {}, "3 Launch and results")),
+      h("div", { class: "steps" }, h("span", {}, "1 Mission"), h("span", { class: "on", "aria-current": "step" }, "2 Design"), h("span", {}, "3 Launch and results")),
+      h("h1", {}, "Design your spacecraft"),
       h("div", { class: "md-grid" }, h("div", {}, panel), dashboard(A, sc)),
       h("div", { class: "row-actions" },
         h("button", { class: "btn", onclick: () => setPhase("setup") }, "Back to missions"),
         h("button", { class: "btn", onclick: () => saveDesign(A) }, "Save this design"),
         h("button", { class: "btn primary big", disabled: !canGo, onclick: launch }, "Launch mission"),
-        !A.valid ? h("span", { class: "dim small" }, "Fix the red items in the dashboard first.") : G.players > 1 && !canGo ? h("span", { class: "dim small" }, "Every role must approve.") : null));
+        !A.valid ? h("span", { class: "dim small", role: "status" }, canGoNote + " Fix the items marked in the dashboard first.") : G.players > 1 && !canGo ? h("span", { class: "dim small" }, "Every role must approve.") : null));
   }
   function roleKeys(r) { return { planner: ["launcher", "orbit", "ground"], craft: ["bus", "solar", "battery", "prop"], science: ["payloads"], comms: ["comms"] }[r]; }
 
@@ -189,7 +191,7 @@
   function result() {
     const R = G.result, sc = MD.SCENARIOS[G.design.scenario], S = R.score, p = S.parts;
     return h("div", {},
-      h("div", { class: "steps" }, h("span", {}, "1 Mission"), h("span", {}, "2 Design"), h("span", { class: "on" }, "3 Launch and results")),
+      h("div", { class: "steps" }, h("span", {}, "1 Mission"), h("span", {}, "2 Design"), h("span", { class: "on", "aria-current": "step" }, "3 Launch and results")),
       h("h1", {}, OUT[R.outcome]), h("div", { class: "big-total" }, S.total, h("span", { class: "dim small" }, " / 100")),
       h("div", { class: "score" }, [["Mission performance", p.performance, 30], ["Science value", p.science, 20], ["Resource efficiency", p.efficiency, 20], ["Decision quality", p.decisions, 15], ["Teamwork", p.collab, 15]]
         .map(([n, v, m]) => h("div", {}, h("b", {}, `${v}/${m}`), h("span", {}, n)))),

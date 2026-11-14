@@ -165,4 +165,38 @@ module.exports = async function (H) {
     await page.locator("a", { hasText: "Play" }).click(); await page.locator("button", { hasText: "Start designing" }).waitFor();
     await page.ctx.close();
   });
+  // 10. accessibility: axe-core on every screen, zoom, status text
+  const axeSrc = require("fs").readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
+  const axe = async (page, label) => {
+    await page.waitForTimeout(450); // let the 160 ms fade-in finish, or text looks low-contrast mid-fade
+    await page.evaluate(axeSrc);
+    const r = await page.evaluate(() => axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] } }));
+    const bad = r.violations.map((v) => v.id + " x" + v.nodes.length + " (" + v.nodes[0].target.join(" ") + ")");
+    expect(bad.length === 0, label + ": axe violations: " + bad.join("; "));
+  };
+  await test("axe: setup, build, report, model, landing, rover start", async (problems) => {
+    const page = await newPage({ width: 1366, height: 768 }, problems);
+    await page.goto(H.getBase()); await axe(page, "landing");
+    await page.goto(H.getBase() + "model.html"); await axe(page, "model");
+    await startScenario(page, "coast", "Normal");
+    await page.locator("button", { hasText: "Back to missions" }).click(); await axe(page, "setup");
+    await btn(page, "Start designing").click(); await axe(page, "build");
+    await btn(page, "Launch mission").click(); await page.locator(".big-total").waitFor(); await axe(page, "report");
+    await page.goto(H.getBase() + "rover.html"); await axe(page, "rover mission screen");
+    await page.ctx.close();
+  });
+  await test("200% zoom equivalent (640x360): no horizontal scroll", async (problems) => {
+    const page = await newPage({ width: 640, height: 360 }, problems);
+    await startScenario(page, "coast", "Normal");
+    expect((await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)) <= 1, "overflow at 640px");
+    await page.ctx.close();
+  });
+  await test("status is text, not colour alone", async (problems) => {
+    const page = await newPage({ width: 1366, height: 768 }, problems);
+    await startScenario(page, "coast", "Normal");
+    await pick(page, "Polar orbit, 550 km").click();
+    expect((await page.locator(".dash .stat.bad", { hasText: "over the limit" }).count()) >= 1, "no text status for an exceeded limit");
+    expect((await page.locator('.pick[aria-pressed="true"]').count()) >= 5, "selected options should expose aria-pressed");
+    await page.ctx.close();
+  });
 };
