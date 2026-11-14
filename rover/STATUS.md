@@ -11,3 +11,4 @@ Not done / risks:
 - No sandbox mode, no competitive team mode, no share link, no printable report.
 - Team mode is hot-seat only. The role approval flow was only checked by loading the page, not clicked through by a person.
 - Mission Design numbers are game values.
+- Build screen look: spacecraft scene drawn by src/md_art.js (changes with every choice), icons on option cards, capacity bars on rockets, numbered sections.

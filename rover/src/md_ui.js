@@ -99,6 +99,11 @@
 
   // ------------ build ------------
   const num = (x, d = 1) => (typeof x === "number" ? x.toFixed(d) : x);
+  // how much of the rocket's capacity to the chosen orbit the current spacecraft uses
+  function capBar(l) {
+    const cap = l.cap[G.design.orbit] || 0, used = MD.analyse(G.design).mass.used, over = !cap || used > cap;
+    return h("span", { class: "capbar" + (over ? " over" : ""), "aria-hidden": "true" }, h("i", { style: "width:" + (cap ? clampPct(used / cap * 100) : 100) + "%" }));
+  }
   function pickGroup(title, why, key, cat, show, multi) {
     const d = G.design;
     return h("div", { class: "grp" }, h("h3", {}, title), h("p", { class: "why" }, why),
@@ -106,7 +111,7 @@
         const on = multi ? d.payloads.includes(id) : d[key] === id;
         return h("button", { class: "pick", "aria-pressed": on, onclick: () => {
           if (multi) { const s = new Set(d.payloads); s.has(id) ? s.delete(id) : s.add(id); d.payloads = [...s]; G.approved.clear(); persist(); render(true); } else setD(key, id);
-        } }, h("b", {}, it.name), it.note || "", h("span", { class: "nums" }, show(it)));
+        } }, MR.mdArt.icon(key, id), h("span", { class: "pick-body" }, h("b", {}, it.name), it.note ? h("span", { class: "pick-note" }, it.note) : null, h("span", { class: "nums" }, show(it)), key === "launcher" ? capBar(it) : null));
       })));
   }
   const GROUPS = {
@@ -122,18 +127,12 @@
   };
 
   // flat side view of the spacecraft that changes with the choices (drawn in code, no images)
-  function craftSVG(d) {
-    const size = { u3: [60, 60], u6: [100, 60], u12: [100, 100] }[d.bus], bw = size[0], bh = size[1], cx = 160, cy = 90;
-    const x0 = cx - bw / 2, y0 = cy - bh / 2, g = [];
-    if (d.solar === "wings") for (const sgn of [-1, 1]) g.push(`<rect x="${sgn < 0 ? x0 - 62 : x0 + bw + 6}" y="${cy - 24}" width="56" height="48" fill="#26323f" stroke="#a0a0a0"/>`);
-    else g.push(`<rect x="${x0 + 4}" y="${y0 + 4}" width="${bw - 8}" height="6" fill="#26323f"/>`);
-    g.push(`<rect x="${x0}" y="${y0}" width="${bw}" height="${bh}" rx="4" fill="#222" stroke="#e0703f" stroke-width="2"/>`);
-    const batW = { s: 14, m: 28, l: 44 }[d.battery]; g.push(`<rect x="${x0 + 8}" y="${y0 + bh - 16}" width="${batW}" height="8" fill="#a0a0a0"/>`);
-    d.payloads.forEach((p, i) => g.push(`<circle cx="${x0 + 16 + i * 24}" cy="${y0 + 20}" r="8" fill="${MD.PAYLOADS[p].tags.includes("imaging") ? "#e0703f" : "#ff9a6e"}"/>`));
-    const ant = { uhf: 14, sband: 26, xband: 40 }[d.comms]; g.push(`<line x1="${cx}" y1="${y0}" x2="${cx}" y2="${y0 - ant}" stroke="#e8e8e8" stroke-width="2"/><circle cx="${cx}" cy="${y0 - ant}" r="4" fill="#e8e8e8"/>`);
-    if (d.prop !== "none") g.push(`<polygon points="${cx - 8},${y0 + bh} ${cx + 8},${y0 + bh} ${cx},${y0 + bh + (d.prop === "electric" ? 22 : 12)}" fill="#a0a0a0"/>`);
-    const wrap = document.createElement("div");
-    wrap.innerHTML = `<svg viewBox="0 0 320 180" class="craft" role="img" aria-label="Your spacecraft: ${MD.BUSES[d.bus].name}, ${MD.SOLAR[d.solar].name}, ${d.payloads.length} instrument(s)">${g.join("")}</svg>`;
+  function craftSVG(d, A) {
+    const wrap = document.createElement("figure"); wrap.className = "stage";
+    wrap.innerHTML = MR.mdArt.craft(d);
+    const cap = document.createElement("figcaption"); cap.className = "small dim";
+    cap.textContent = MD.LAUNCHERS[d.launcher].name + " to " + MD.ORBITS[d.orbit].name + (A ? ", " + A.mass.used.toFixed(1) + " kg" : "");
+    wrap.append(cap);
     return wrap;
   }
 
@@ -143,7 +142,7 @@
       h("div", { class: "row" }, h("span", {}, h("b", {}, label), crit(key), h("span", { class: "stat" + (over ? " bad" : "") }, over ? "over the limit" : used / (cap || 1) > 0.9 ? "tight" : "ok")), h("span", {}, text)),
       h("div", { class: "bar " + (over ? "bad" : used / (cap || 1) > 0.9 ? "warn" : "") }, h("i", { style: `width:${clampPct((used / (cap || 1)) * 100)}%` })),
       h("p", { class: "why" }, WHY[key]));
-    return h("aside", { class: "dash card" }, craftSVG(G.design), h("h3", {}, "Mission dashboard"),
+    return h("aside", { class: "dash card" }, craftSVG(G.design, A), h("h3", {}, "Mission dashboard"),
       res("mass", "Mass", A.mass.used, A.mass.cap || 1, A.mass.cap ? `${num(A.mass.used)} / ${A.mass.cap} kg` : `${num(A.mass.used)} kg, this rocket cannot reach this orbit`, A.mass.used > A.mass.cap),
       res("power", "Power", A.power.load, Math.max(A.power.gen, 0.1), `use ${num(A.power.load)} W / make ${num(A.power.gen)} W`, A.power.gen < A.power.load),
       res("budget", "Budget", A.budget.used, A.budget.cap, `${num(A.budget.used)} / ${num(A.budget.cap)} M`, A.budget.used > A.budget.cap),
@@ -175,7 +174,7 @@
     return h("div", {},
       h("div", { class: "steps" }, h("span", {}, "1 Mission"), h("span", { class: "on", "aria-current": "step" }, "2 Design"), h("span", {}, "3 Launch and results")),
       h("h1", {}, "Design your spacecraft"),
-      h("div", { class: "md-grid" }, h("div", {}, panel), dashboard(A, sc)),
+      h("div", { class: "md-grid" }, h("div", { class: "panel-col" }, panel), dashboard(A, sc)),
       h("div", { class: "row-actions" },
         h("button", { class: "btn", onclick: () => setPhase("setup") }, "Back to missions"),
         h("button", { class: "btn", onclick: () => saveDesign(A) }, "Save this design"),

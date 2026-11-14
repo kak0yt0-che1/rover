@@ -51,3 +51,25 @@ svg.craft { width:100%; height:auto; background:var(--bg); border-radius:var(--r
 .pick, .roles button, .btn { min-height:44px; }
 .btn.small { min-height:44px; }
 h1:focus { outline:none; }
+
+/* look: icons on cards, spacecraft stage, numbered sections, capacity bars */
+.pick { display:flex; gap:var(--s2); align-items:flex-start; transition:border-color var(--t), transform var(--t); }
+.pick-icon { flex:0 0 auto; width:48px; height:48px; display:grid; place-content:center; background:var(--bg); border:1px solid var(--line); border-radius:var(--r); }
+.pick[aria-pressed="true"] .pick-icon { border-color:var(--accent); }
+.pick-body { min-width:0; flex:1; }
+.pick-body b { display:block; margin-bottom:2px; }
+.pick-note { display:block; color:var(--dim); font-size:13px; }
+.capbar { display:block; height:4px; background:var(--raised); border-radius:2px; margin-top:8px; overflow:hidden; }
+.capbar i { display:block; height:100%; background:var(--dim); transition:width var(--t); }
+.capbar.over i { background:var(--accent-hi); }
+figure.stage { margin:0 0 var(--s2); }
+figure.stage svg.craft { margin:0; display:block; border:1px solid var(--line); }
+figure.stage figcaption { margin-top:var(--s1); text-align:center; }
+#app { counter-reset:grp; }
+.panel-col .grp > h3 { display:flex; align-items:center; gap:var(--s1); font-size:17px; }
+.panel-col .grp > h3::before { counter-increment:grp; content:counter(grp); display:inline-grid; place-content:center; width:24px; height:24px; border-radius:50%; background:var(--accent); color:var(--on-accent); font:600 13px var(--mono); }
+.panel-col .grp { padding-bottom:var(--s2); border-bottom:1px solid var(--line); }
+@media (min-width:901px) { .md-grid { grid-template-columns:minmax(0,1fr) 380px; } }
+h1:first-of-type { letter-spacing:.01em; }
+@media (prefers-reduced-motion:reduce) { .pick { transition:none; } }
+a.btn { text-decoration:none; display:inline-flex; align-items:center; }
