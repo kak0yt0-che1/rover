@@ -69,7 +69,13 @@ figure.stage figcaption { margin-top:var(--s1); text-align:center; }
 .panel-col .grp > h3 { display:flex; align-items:center; gap:var(--s1); font-size:17px; }
 .panel-col .grp > h3::before { counter-increment:grp; content:counter(grp); display:inline-grid; place-content:center; width:24px; height:24px; border-radius:50%; background:var(--accent); color:var(--on-accent); font:600 13px var(--mono); }
 .panel-col .grp { padding-bottom:var(--s2); border-bottom:1px solid var(--line); }
-@media (min-width:901px) { .md-grid { grid-template-columns:minmax(0,1fr) 380px; } }
+@media (min-width:901px) { .md-grid { grid-template-columns:minmax(0,1fr) 440px; } }
 h1:first-of-type { letter-spacing:.01em; }
 @media (prefers-reduced-motion:reduce) { .pick { transition:none; } }
 a.btn { text-decoration:none; display:inline-flex; align-items:center; }
+
+ul.legend { list-style:none; margin:var(--s1) 0 0; padding:0; display:flex; flex-wrap:wrap; gap:6px; justify-content:center; }
+ul.legend li { font-size:12px; color:var(--dim); border:1px solid var(--line2); border-radius:var(--r); padding:0 8px; }
+svg.craft .part.new { animation:partpop 200ms ease-out both; transform-box:fill-box; transform-origin:center; }
+@keyframes partpop { from { opacity:.15; transform:scale(.94); } to { opacity:1; transform:none; } }
+@media (prefers-reduced-motion:reduce) { svg.craft .part.new { animation:none; } }

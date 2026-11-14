@@ -133,6 +133,9 @@
     const cap = document.createElement("figcaption"); cap.className = "small dim";
     cap.textContent = MD.LAUNCHERS[d.launcher].name + " to " + MD.ORBITS[d.orbit].name + (A ? ", " + A.mass.used.toFixed(1) + " kg" : "");
     wrap.append(cap);
+    const lg = document.createElement("ul"); lg.className = "legend";
+    [MD.BUSES[d.bus].name, MD.SOLAR[d.solar].name, MD.BATTERY[d.battery].name, MD.COMMS[d.comms].name, MD.PROP[d.prop].name].concat(d.payloads.map((p) => MD.PAYLOADS[p].name)).forEach((t) => { const li = document.createElement("li"); li.textContent = t; lg.append(li); });
+    wrap.append(lg);
     return wrap;
   }
 

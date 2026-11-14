@@ -4,54 +4,91 @@
   const MR = (globalThis.MR = globalThis.MR || {}), MD = MR.MD;
   const ACC = "#e0703f", ACC2 = "#ff9a6e", INK = "#e8e8e8", DIM = "#a0a0a0", LINE = "#444", PANEL = "#26323f", CELL = "#3d5066", HULL = "#2a2a2c";
 
-  // ---------- spacecraft scene (360 x 230) ----------
-  const STARS = [[20, 22], [62, 60], [98, 18], [140, 44], [214, 16], [262, 52], [318, 24], [336, 78], [24, 112], [300, 124], [52, 160], [338, 168], [118, 78], [248, 98]];
+  // ---------- spacecraft scene (480 x 320) ----------
+  // Layout rules, so nothing overlaps or leaves its place:
+  //  - the hull is a fixed rectangle; the battery row, computer chip and payload bay live INSIDE it
+  //  - the payload bay has one socket per bus slot; every instrument is drawn inside its own socket and clipped to it
+  //  - solar wings, antenna and thruster attach to fixed mount points on the outside of the hull
+  const W = 480, H = 320, CX = 240;
+  const BUS = { u3: { w: 120, h: 120, slots: 1 }, u6: { w: 180, h: 120, slots: 2 }, u12: { w: 240, h: 132, slots: 3 } };
+  const STARS = [[24, 52], [70, 96], [112, 44], [156, 70], [330, 40], [388, 82], [430, 54], [452, 118], [30, 170], [440, 190], [60, 230], [420, 238], [200, 36], [300, 74]];
   function cells(x, y, w, h, cols, rows) {
-    let s = `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${PANEL}" stroke="${DIM}" stroke-width="1.5"/>`;
-    for (let i = 1; i < cols; i++) s += `<line x1="${x + (w * i) / cols}" y1="${y}" x2="${x + (w * i) / cols}" y2="${y + h}" stroke="${CELL}"/>`;
-    for (let j = 1; j < rows; j++) s += `<line x1="${x}" y1="${y + (h * j) / rows}" x2="${x + w}" y2="${y + (h * j) / rows}" stroke="${CELL}"/>`;
-    return s;
+    let t = '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + PANEL + '" stroke="' + DIM + '" stroke-width="1.5"/>';
+    for (let i = 1; i < cols; i++) t += '<line x1="' + (x + (w * i) / cols) + '" y1="' + y + '" x2="' + (x + (w * i) / cols) + '" y2="' + (y + h) + '" stroke="' + CELL + '"/>';
+    for (let j = 1; j < rows; j++) t += '<line x1="' + x + '" y1="' + (y + (h * j) / rows) + '" x2="' + (x + w) + '" y2="' + (y + (h * j) / rows) + '" stroke="' + CELL + '"/>';
+    return t;
   }
-  // an instrument drawn on the underside of the bus (so it can point at the planet) or on a boom
-  function instrument(id, x, y) {
-    const lens = (r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#111" stroke="${ACC2}" stroke-width="2"/><circle cx="${x}" cy="${y}" r="${r * 0.5}" fill="${ACC}"/>`;
+  // an instrument drawn inside its socket (sx, sy, sw, sh)
+  function instrument(id, sx, sy, sw, sh) {
+    const mx = sx + sw / 2, my = sy + sh / 2, r = Math.min(sw, sh) / 2 - 8;
+    const lens = (rr, cy) => '<circle cx="' + mx + '" cy="' + cy + '" r="' + rr + '" fill="#111" stroke="' + ACC2 + '" stroke-width="2"/><circle cx="' + mx + '" cy="' + cy + '" r="' + rr * 0.45 + '" fill="' + ACC + '"/>';
     switch (id) {
-      case "camera": return lens(8);
-      case "multi": return lens(11) + `<rect x="${x - 11}" y="${y + 14}" width="22" height="4" fill="${ACC2}"/>`;
-      case "mag": return `<line x1="${x}" y1="${y}" x2="${x + 34}" y2="${y + 22}" stroke="${INK}" stroke-width="2"/><rect x="${x + 30}" y="${y + 18}" width="9" height="9" fill="${ACC}"/>`;
-      case "plasma": return `<line x1="${x - 14}" y1="${y}" x2="${x + 14}" y2="${y + 26}" stroke="${INK}" stroke-width="2"/><line x1="${x + 14}" y1="${y}" x2="${x - 14}" y2="${y + 26}" stroke="${INK}" stroke-width="2"/><circle cx="${x}" cy="${y}" r="4" fill="${ACC2}"/>`;
-      case "spectro": return `<rect x="${x - 7}" y="${y - 5}" width="14" height="16" rx="3" fill="#111" stroke="${ACC2}" stroke-width="2"/><rect x="${x - 4}" y="${y + 11}" width="8" height="5" fill="${ACC}"/>`;
-      case "lcam": return lens(10) + `<path d="M${x - 14} ${y + 12} L${x - 10} ${y + 6} L${x + 10} ${y + 6} L${x + 14} ${y + 12}Z" fill="${HULL}" stroke="${DIM}"/>`;
+      case "camera": return lens(r * 0.85, my);
+      case "multi": return lens(r * 0.62, my - 5) + '<rect x="' + (mx - 18) + '" y="' + (sy + sh - 13) + '" width="10" height="5" fill="' + ACC + '"/><rect x="' + (mx - 5) + '" y="' + (sy + sh - 13) + '" width="10" height="5" fill="' + ACC2 + '"/><rect x="' + (mx + 8) + '" y="' + (sy + sh - 13) + '" width="10" height="5" fill="' + DIM + '"/>';
+      case "mag": return '<rect x="' + (sx + 10) + '" y="' + (sy + sh - 26) + '" width="20" height="16" rx="2" fill="#111" stroke="' + ACC2 + '" stroke-width="2"/><line x1="' + (sx + 30) + '" y1="' + (sy + sh - 22) + '" x2="' + (sx + sw - 14) + '" y2="' + (sy + 14) + '" stroke="' + INK + '" stroke-width="2"/><rect x="' + (sx + sw - 19) + '" y="' + (sy + 9) + '" width="9" height="9" fill="' + ACC + '"/>';
+      case "plasma": return '<line x1="' + (sx + 12) + '" y1="' + (sy + 12) + '" x2="' + (sx + sw - 12) + '" y2="' + (sy + sh - 12) + '" stroke="' + INK + '" stroke-width="2"/><line x1="' + (sx + sw - 12) + '" y1="' + (sy + 12) + '" x2="' + (sx + 12) + '" y2="' + (sy + sh - 12) + '" stroke="' + INK + '" stroke-width="2"/><circle cx="' + mx + '" cy="' + my + '" r="5" fill="' + ACC + '"/>';
+      case "spectro": return '<rect x="' + (mx - 12) + '" y="' + (sy + 8) + '" width="24" height="' + (sh - 24) + '" rx="5" fill="#111" stroke="' + ACC2 + '" stroke-width="2"/><rect x="' + (mx - 7) + '" y="' + (sy + sh - 16) + '" width="14" height="7" fill="' + ACC + '"/>';
+      case "lcam": return lens(r * 0.7, my - 2) + '<path d="M' + (mx - 16) + ' ' + (sy + sh - 8) + ' L' + (mx - 11) + ' ' + (sy + sh - 15) + ' L' + (mx + 11) + ' ' + (sy + sh - 15) + ' L' + (mx + 16) + ' ' + (sy + sh - 8) + 'Z" fill="' + HULL + '" stroke="' + DIM + '"/>';
       default: return "";
     }
   }
+  let lastDesign = null;
   MR.mdArt = {};
   MR.mdArt.craft = function (d) {
-    const sz = { u3: [64, 64], u6: [112, 64], u12: [112, 112] }[d.bus], bw = sz[0], bh = sz[1], cx = 180, cy = 98;
-    const x0 = cx - bw / 2, y0 = cy - bh / 2, g = [];
-    // sky: stars, the planet's curve and the orbit line
-    STARS.forEach(([x, y], i) => g.push(`<circle cx="${x}" cy="${y}" r="${i % 3 === 0 ? 1.6 : 1}" fill="${i % 2 ? "#777" : "#bbb"}"/>`));
-    g.push(`<circle cx="180" cy="470" r="285" fill="#161c24" stroke="#2e3a4d" stroke-width="2"/>`);
-    g.push(`<ellipse cx="180" cy="205" rx="168" ry="18" fill="none" stroke="${DIM}" stroke-width="1" stroke-dasharray="5 6" opacity=".7"/>`);
-    // solar panels
-    if (d.solar === "wings") for (const sgn of [-1, 1]) { const w = 86, x = sgn < 0 ? x0 - 10 - w : x0 + bw + 10; g.push(`<line x1="${sgn < 0 ? x0 : x0 + bw}" y1="${cy}" x2="${sgn < 0 ? x0 - 10 : x0 + bw + 10}" y2="${cy}" stroke="${DIM}" stroke-width="3"/>`, cells(x, cy - 26, w, 52, 4, 3)); }
-    else g.push(cells(x0 + 6, y0 - 7, bw - 12, 7, 5, 1));
+    const B = BUS[d.bus], bw = B.w, bh = B.h, x0 = CX - bw / 2, y0 = 160 - bh / 2, x1 = x0 + bw, y1 = y0 + bh, cy = 160;
+    const changed = (k) => (lastDesign && JSON.stringify(lastDesign[k]) !== JSON.stringify(d[k]) ? " new" : "");
+    const part = (name, key, inner) => '<g class="part' + changed(key) + '" data-part="' + name + '">' + inner + "</g>";
+    const g = [];
+    // backdrop: faint grid, stars, planet, orbit line, corner brackets
+    for (let x = 40; x < W; x += 40) g.push('<line x1="' + x + '" y1="0" x2="' + x + '" y2="' + H + '" stroke="#17171a"/>');
+    for (let y = 40; y < H; y += 40) g.push('<line x1="0" y1="' + y + '" x2="' + W + '" y2="' + y + '" stroke="#17171a"/>');
+    STARS.forEach(([x, y], i) => g.push('<circle cx="' + x + '" cy="' + y + '" r="' + (i % 3 === 0 ? 1.6 : 1) + '" fill="' + (i % 2 ? "#777" : "#bbb") + '"/>'));
+    g.push('<circle cx="240" cy="572" r="300" fill="#161c24" stroke="#2e3a4d" stroke-width="2"/>');
+    g.push('<path d="M16 302 Q240 258 464 302" fill="none" stroke="' + DIM + '" stroke-dasharray="5 6" opacity=".7"/>');
+    [[10, 10, 1, 1], [W - 10, 10, -1, 1], [10, H - 10, 1, -1], [W - 10, H - 10, -1, -1]].forEach(([x, y, sx, sy]) => g.push('<path d="M' + x + " " + (y + 14 * sy) + " V" + y + " H" + (x + 14 * sx) + '" fill="none" stroke="' + ACC + '" stroke-width="2"/>'));
+    g.push('<text x="26" y="30" fill="' + DIM + '" font-size="12">' + MD.BUSES[d.bus].name + "</text>");
+    g.push('<text x="' + (W - 26) + '" y="30" fill="' + DIM + '" font-size="12" text-anchor="end">' + MD.ORBITS[d.orbit].name.split(",")[0] + "</text>");
+
+    // solar: wings on fixed arms at the hull sides, or a cell band across the top of the hull
+    if (d.solar === "wings") {
+      let w = "";
+      for (const sgn of [-1, 1]) { const ax = sgn < 0 ? x0 : x1, wx = sgn < 0 ? x0 - 12 - 84 : x1 + 12; w += '<line x1="' + ax + '" y1="' + cy + '" x2="' + (sgn < 0 ? x0 - 12 : x1 + 12) + '" y2="' + cy + '" stroke="' + DIM + '" stroke-width="4"/>' + cells(wx, cy - 42, 84, 84, 4, 4); }
+      g.push(part("solar", "solar", w));
+    }
     // hull
-    g.push(`<rect x="${x0}" y="${y0}" width="${bw}" height="${bh}" rx="5" fill="${HULL}" stroke="${ACC}" stroke-width="2.5"/>`);
-    [[x0 + 7, y0 + 7], [x0 + bw - 7, y0 + 7], [x0 + 7, y0 + bh - 7], [x0 + bw - 7, y0 + bh - 7]].forEach(([x, y]) => g.push(`<circle cx="${x}" cy="${y}" r="1.8" fill="#666"/>`));
-    // battery cells inside the hull
+    g.push(part("bus", "bus", '<rect x="' + x0 + '" y="' + y0 + '" width="' + bw + '" height="' + bh + '" rx="9" fill="' + HULL + '" stroke="' + ACC + '" stroke-width="3"/>' +
+      [[x0 + 8, y0 + 8], [x1 - 8, y0 + 8], [x0 + 8, y1 - 8], [x1 - 8, y1 - 8]].map(([x, y]) => '<circle cx="' + x + '" cy="' + y + '" r="2" fill="#666"/>').join("")));
+    if (d.solar === "body") g.push(part("solar", "solar", cells(x0 + 14, y0 + 4, bw - 28, 7, 6, 1)));
+    // battery cells (left) and computer chip (right), inside the hull
     const n = { s: 1, m: 2, l: 3 }[d.battery];
-    for (let i = 0; i < 3; i++) g.push(`<rect x="${x0 + 12 + i * 15}" y="${y0 + bh - 20}" width="11" height="8" rx="1.5" fill="${i < n ? ACC2 : "none"}" stroke="${i < n ? ACC2 : LINE}"/>`);
-    // instruments: lenses sit in a row on the hull, booms hang below
-    d.payloads.forEach((p, i) => { const ix = cx + (i - (d.payloads.length - 1) / 2) * 34; const onBoom = p === "mag" || p === "plasma"; g.push(instrument(p, ix, onBoom ? y0 + bh : y0 + 24)); });
-    // antenna
-    if (d.comms === "uhf") g.push(`<line x1="${cx}" y1="${y0}" x2="${cx}" y2="${y0 - 26}" stroke="${INK}" stroke-width="2"/><circle cx="${cx}" cy="${y0 - 26}" r="3" fill="${INK}"/>`);
-    if (d.comms === "sband") g.push(`<line x1="${cx}" y1="${y0}" x2="${cx}" y2="${y0 - 14}" stroke="${INK}" stroke-width="2"/><rect x="${cx - 14}" y="${y0 - 22}" width="28" height="8" rx="3" fill="${DIM}"/>`);
-    if (d.comms === "xband") g.push(`<line x1="${cx}" y1="${y0}" x2="${cx}" y2="${y0 - 14}" stroke="${INK}" stroke-width="2"/><path d="M${cx - 24} ${y0 - 30} Q${cx} ${y0 - 8} ${cx + 24} ${y0 - 30}Z" fill="${DIM}" stroke="${INK}"/><line x1="${cx}" y1="${y0 - 20}" x2="${cx}" y2="${y0 - 40}" stroke="${INK}"/><circle cx="${cx}" cy="${y0 - 40}" r="2.5" fill="${ACC2}"/>`);
-    // thruster
-    if (d.prop === "cold") g.push(`<rect x="${x0 - 7}" y="${y0 + bh - 14}" width="7" height="6" fill="${DIM}"/><rect x="${x0 + bw}" y="${y0 + bh - 14}" width="7" height="6" fill="${DIM}"/><circle cx="${x0 - 12}" cy="${y0 + bh - 11}" r="2" fill="${INK}"/><circle cx="${x0 + bw + 12}" cy="${y0 + bh - 11}" r="2" fill="${INK}"/>`);
-    if (d.prop === "electric") g.push(`<path d="M${cx - 9} ${y0 + bh} L${cx + 9} ${y0 + bh} L${cx + 5} ${y0 + bh + 9} L${cx - 5} ${y0 + bh + 9}Z" fill="${DIM}"/><ellipse cx="${cx}" cy="${y0 + bh + 17}" rx="4" ry="9" fill="${ACC}" opacity=".9"/>`);
-    return `<svg viewBox="0 0 360 230" class="craft" role="img" aria-label="Your spacecraft: ${MD.BUSES[d.bus].name}, ${MD.SOLAR[d.solar].name}, ${MD.BATTERY[d.battery].name}, ${MD.COMMS[d.comms].name}, ${d.payloads.length} instrument(s)">${g.join("")}</svg>`;
+    let bat = "";
+    for (let i = 0; i < 3; i++) bat += '<rect x="' + (x0 + 14 + i * 20) + '" y="' + (y0 + 16) + '" width="16" height="22" rx="2" fill="' + (i < n ? ACC2 : "none") + '" stroke="' + (i < n ? ACC2 : LINE) + '" stroke-width="1.5"/>';
+    g.push(part("battery", "battery", bat));
+    g.push('<rect x="' + (x1 - 14 - 34) + '" y="' + (y0 + 16) + '" width="34" height="22" rx="2" fill="#1c1c1e" stroke="' + DIM + '"/>' + [0, 1, 2].map((i) => '<line x1="' + (x1 - 14 - 26 + i * 10) + '" y1="' + (y0 + 38) + '" x2="' + (x1 - 14 - 26 + i * 10) + '" y2="' + (y0 + 43) + '" stroke="' + DIM + '"/>').join(""));
+    // payload bay: one socket per slot, instruments clipped to their socket
+    const bayX = x0 + 12, bayY = y0 + 54, bayW = bw - 24, bayH = bh - 66, gap = 8, sw = (bayW - gap * (B.slots - 1)) / B.slots;
+    let bay = "", defs = "";
+    for (let i = 0; i < B.slots; i++) {
+      const sx = bayX + i * (sw + gap), p = d.payloads[i];
+      defs += '<clipPath id="slot' + i + '"><rect x="' + sx + '" y="' + bayY + '" width="' + sw + '" height="' + bayH + '" rx="5"/></clipPath>';
+      bay += '<rect x="' + sx + '" y="' + bayY + '" width="' + sw + '" height="' + bayH + '" rx="5" fill="' + (p ? "#1b1b1d" : "none") + '" stroke="' + (p ? DIM : LINE) + '" stroke-width="1.5"' + (p ? "" : ' stroke-dasharray="4 4"') + "/>";
+      if (p) bay += '<g clip-path="url(#slot' + i + ')">' + instrument(p, sx, bayY, sw, bayH) + "</g>";
+    }
+    g.push("<defs>" + defs + "</defs>" + part("payloads", "payloads", bay));
+    if (d.payloads.length > B.slots) g.push('<text x="' + (x1 - 12) + '" y="' + (y0 + 51) + '" fill="' + ACC2 + '" font-size="11" text-anchor="end">+' + (d.payloads.length - B.slots) + " no room</text>");
+    // antenna on the top mount
+    let ant = "";
+    if (d.comms === "uhf") ant = '<line x1="' + CX + '" y1="' + y0 + '" x2="' + CX + '" y2="' + (y0 - 46) + '" stroke="' + INK + '" stroke-width="2.5"/><circle cx="' + CX + '" cy="' + (y0 - 48) + '" r="3.5" fill="' + INK + '"/>';
+    if (d.comms === "sband") ant = '<line x1="' + CX + '" y1="' + y0 + '" x2="' + CX + '" y2="' + (y0 - 22) + '" stroke="' + INK + '" stroke-width="2.5"/><rect x="' + (CX - 24) + '" y="' + (y0 - 32) + '" width="48" height="10" rx="4" fill="' + DIM + '" stroke="' + INK + '"/>';
+    if (d.comms === "xband") ant = '<line x1="' + CX + '" y1="' + y0 + '" x2="' + CX + '" y2="' + (y0 - 24) + '" stroke="' + INK + '" stroke-width="2.5"/><path d="M' + (CX - 32) + " " + (y0 - 44) + " Q" + CX + " " + (y0 - 14) + " " + (CX + 32) + " " + (y0 - 44) + 'Z" fill="' + DIM + '" stroke="' + INK + '"/><line x1="' + CX + '" y1="' + (y0 - 26) + '" x2="' + CX + '" y2="' + (y0 - 56) + '" stroke="' + INK + '"/><circle cx="' + CX + '" cy="' + (y0 - 58) + '" r="3" fill="' + ACC2 + '"/>';
+    g.push(part("comms", "comms", ant));
+    // thruster on the bottom mount
+    let th = "";
+    if (d.prop === "cold") for (const x of [x0 + bw * 0.28, x0 + bw * 0.72]) th += '<path d="M' + (x - 9) + " " + y1 + " L" + (x + 9) + " " + y1 + " L" + (x + 6) + " " + (y1 + 14) + " L" + (x - 6) + " " + (y1 + 14) + 'Z" fill="' + DIM + '" stroke="' + INK + '"/><circle cx="' + (x - 3) + '" cy="' + (y1 + 22) + '" r="2" fill="' + INK + '"/><circle cx="' + (x + 4) + '" cy="' + (y1 + 27) + '" r="1.5" fill="' + INK + '"/>';
+    if (d.prop === "electric") th = '<path d="M' + (CX - 15) + " " + y1 + " L" + (CX + 15) + " " + y1 + " L" + (CX + 9) + " " + (y1 + 18) + " L" + (CX - 9) + " " + (y1 + 18) + 'Z" fill="' + DIM + '" stroke="' + INK + '"/><ellipse cx="' + CX + '" cy="' + (y1 + 32) + '" rx="6" ry="13" fill="' + ACC + '"/><ellipse cx="' + CX + '" cy="' + (y1 + 29) + '" rx="3" ry="8" fill="' + ACC2 + '"/>';
+    g.push(part("prop", "prop", th));
+    lastDesign = JSON.parse(JSON.stringify(d));
+    return '<svg viewBox="0 0 ' + W + " " + H + '" class="craft" font-family="system-ui,sans-serif" role="img" aria-label="Your spacecraft: ' + MD.BUSES[d.bus].name + ", " + MD.SOLAR[d.solar].name + ", " + MD.BATTERY[d.battery].name + ", " + MD.COMMS[d.comms].name + ", " + d.payloads.length + ' instrument(s)">' + g.join("") + "</svg>";
   };
 
   // ---------- option icons (32 x 32) ----------
