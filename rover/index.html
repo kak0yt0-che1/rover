@@ -4,37 +4,49 @@
 <meta charset="utf-8">
 <meta name="color-scheme" content="dark">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rover Rules: program a Mars rover to survive</title>
+<title>Mission Design: build a space mission and see if it survives</title>
+<meta name="description" content="A browser game for 1 to 4 players: design a small spacecraft, pick a rocket and an orbit under six limits, fly the mission through random events, and learn why it worked.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ccircle cx=%278%27 cy=%278%27 r=%277%27 fill=%27%23e0703f%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="md.css">
+<style>
+  .land { max-width: 720px; margin: 0 auto; padding: var(--s4) 0; }
+  .land h1 { font-size: 36px; line-height: 1.2; margin: 0 0 var(--s2); }
+  .land .lead { font-size: 18px; color: var(--dim); margin: 0 0 var(--s3); }
+  .land ol { padding-left: var(--s3); margin: 0 0 var(--s3); }
+  .land li { margin-bottom: var(--s1); }
+  .land .cta { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; margin-bottom: var(--s4); }
+  .land .card + .card { margin-top: var(--s2); }
+  .land a.btn { text-decoration: none; display: inline-flex; align-items: center; }
+</style>
 </head>
 <body>
-<canvas id="stars"></canvas>
 <header>
-  <div class="logo"><i></i>ROVER RULES</div>
-  <span class="tag">You are the engineer, not the driver. Mars is trying to kill your rover.</span>
-  <nav id="nav"></nav>
-  <a class="btn ghost" href="mission.html">Mission Design</a>
-  <button class="btn ghost" id="sndBtn" title="Sound on/off">Sound off</button>
-  <button class="btn" id="aboutBtn">Science &amp; sources</button>
+  <div class="logo"><i></i>MISSION DESIGN</div>
+  <span class="tag">A teaching game about space engineering trade-offs.</span>
 </header>
-<main>
-  <section class="screen" id="s-mission"></section>
-  <section class="screen" id="s-design"></section>
-  <section class="screen" id="s-program"></section>
-  <section class="screen" id="s-run"></section>
+<main class="land">
+  <h1>Design a space mission. Then see if it survives.</h1>
+  <p class="lead">Pick a goal, build a small spacecraft, choose a rocket and an orbit. Six limits fight each other: mass, power, budget, data, communications and time.</p>
+  <div class="cta">
+    <a class="btn primary big" href="mission.html">Play Mission Design</a>
+    <span class="dim small">1 to 4 players, about 5 minutes, runs in your browser, nothing to install.</span>
+  </div>
+  <div class="card">
+    <h3>How a round works</h3>
+    <ol>
+      <li>Choose a mission and a difficulty.</li>
+      <li>Build the spacecraft and pick the rocket and orbit. The dashboard shows all six limits live.</li>
+      <li>Launch. A 30-day mission runs with random events.</li>
+      <li>Read the report on why it worked or failed. Redesign and fly again.</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h3>Bonus: Rover Rules</h3>
+    <p>Program a Mars rover with visual IF / ELSE IF / ELSE blocks and watch it drive over real terrain of Jezero crater (USGS data).</p>
+    <a class="btn" href="rover.html">Play Rover Rules</a>
+  </div>
+  <p class="small dim">Made for the NASA Space Apps Challenge 2026, challenge "Space Mission Design Game". Numbers are simplified for teaching and are not data for real spacecraft. Not affiliated with or endorsed by NASA.</p>
 </main>
-<dialog id="about"></dialog>
-
-<script src="data/terrain_data.js"></script>
-<script src="src/config.js"></script>
-<script src="src/rng.js"></script>
-<script src="src/terrain.js"></script>
-<script src="src/rover.js"></script>
-<script src="src/rules.js"></script>
-<script src="src/missions.js"></script>
-<script src="src/sim.js"></script>
-<script src="src/tune.js"></script>
-<script src="src/visual.js"></script>
-<script src="src/ui.js"></script>
 </body>
 </html>
