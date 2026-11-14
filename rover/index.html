@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rover Rules: program a Mars rover to survive</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="stars"></canvas>
+<header>
+  <div class="logo"><i></i>ROVER RULES</div>
+  <span class="tag">You are the engineer, not the driver. Mars is trying to kill your rover.</span>
+  <nav id="nav"></nav>
+  <button class="btn ghost" id="sndBtn" title="Sound on/off">Sound off</button>
+  <button class="btn" id="aboutBtn">Science &amp; sources</button>
+</header>
+<main>
+  <section class="screen" id="s-mission"></section>
+  <section class="screen" id="s-design"></section>
+  <section class="screen" id="s-program"></section>
+  <section class="screen" id="s-run"></section>
+</main>
+<dialog id="about"></dialog>
+
+<script src="data/terrain_data.js"></script>
+<script src="src/config.js"></script>
+<script src="src/rng.js"></script>
+<script src="src/terrain.js"></script>
+<script src="src/rover.js"></script>
+<script src="src/rules.js"></script>
+<script src="src/missions.js"></script>
+<script src="src/sim.js"></script>
+<script src="src/tune.js"></script>
+<script src="src/visual.js"></script>
+<script src="src/ui.js"></script>
+</body>
+</html>
