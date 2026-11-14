@@ -1,11 +1,21 @@
-# Rover Rules (working title): program a Mars rover to survive
+# Rover Rules + Mission Design
 
-NASA Space Apps Challenge 2026. You are the engineer, not the driver: design a rover, write IF-THEN rules, send them up as one package, watch the sol play out, read the replay, fix the rules.
+NASA Space Apps Challenge 2026, challenge "Space Mission Design Game". Two games in one folder:
+- **Mission Design** (`mission.html`): design a small spacecraft, pick a rocket and an orbit under six limits (mass, power, budget, data, communications, time), fly 30 days with random events, read why it worked. Solo or 1 to 4 players with roles.
+- **Rover Rules** (`index.html`): program a Mars rover with visual IF / ELSE IF / ELSE blocks on real Jezero terrain.
+
+Mission Design numbers are simplified game values, not data for real vehicles. Rover Rules is below.
+
+Play in 2 minutes: open `mission.html` in a browser, pick "Coastal Watch", press "Start designing", then "Launch mission" (the default design is valid). Tests: `node test/md_test.js`.
+
+---
+
+Rover Rules: NASA Space Apps Challenge 2026. You are the engineer, not the driver: design a rover, write IF-THEN rules, send them up as one package, watch the sol play out, read the replay, fix the rules.
 
 ## Run it
 - Open `index.html` in a browser (works from disk, no server, no build step).
 - Publish: push this folder to a GitHub repo, then Settings > Pages > deploy from the main branch root. The Pages URL is the public demo link.
-- Logic tests without graphics (need Node.js; run from this folder): `node test/console_test.js` and `node test/balance_test.js`. Both read `data/terrain_data.js`.
+- Logic tests without graphics (need Node.js; run from this folder): `node test/md_test.js`, `node test/console_test.js` and `node test/balance_test.js`. Both read `data/terrain_data.js`.
 
 ## Structure (one owner per file)
 | File | What it does |
@@ -46,3 +56,6 @@ NASA Space Apps Challenge 2026. You are the engineer, not the driver: design a r
 
 ## AI-use log (fill in for the submission)
 - Code in `src/`, `tools/`, `test/` and `index.html` was first drafted by Claude (Anthropic). Tested by: Olzhas Maisuly and Margulan Maratuly.
+
+## Screenshots (Mission Design)
+`docs/md_setup.png`, `docs/md_build.png`, `docs/md_result.png`.

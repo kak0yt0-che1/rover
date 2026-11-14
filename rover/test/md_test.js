@@ -5,6 +5,8 @@ const MD = MR.MD, assert = require("assert");
 let n = 0; const ok = (c, m) => { assert(c, m); n++; };
 const D = (sc, o) => Object.assign(MD.defaultDesign(sc), o);
 
+// 0. every scenario starts valid
+for (const sc of Object.keys(MD.SCENARIOS)) { const st = MD.analyse(MD.defaultDesign(sc)); ok(st.valid, sc + " default design is valid: " + st.problems.join(";")); }
 // 1. incompatible launcher/orbit is rejected with a reason
 let A = MD.analyse(D("coast", { launcher: "rideshare", orbit: "polar" }));
 ok(!A.valid && A.problems.some((p) => /cannot reach/.test(p)), "rideshare cannot reach polar");

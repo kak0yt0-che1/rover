@@ -93,7 +93,9 @@
   // ---------- default design ----------
   MD.defaultDesign = function (scenarioId) {
     const base = { scenario: scenarioId || "coast", difficulty: "normal", seed: 7, launcher: "rideshare", orbit: "sso", bus: "u6", solar: "wings", battery: "m", comms: "sband", payloads: ["camera"], prop: "none", ground: "single" };
-    return base;
+    // every scenario starts from a valid but modest design, so a first launch always works and can be improved
+    const START = { aurora: { launcher: "small", orbit: "polar", payloads: ["plasma"], comms: "sband" }, moon: { launcher: "medium", orbit: "lunar", payloads: ["spectro"], prop: "electric", comms: "sband" } };
+    return Object.assign(base, START[base.scenario] || {});
   };
   // ground network: more stations = more contact time, more cost
   MD.GROUND = { single: { name: "One ground station", contact: 1, cost: 0.2 }, network: { name: "Station network", contact: 2.2, cost: 1.2 } };

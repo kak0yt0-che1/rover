@@ -82,13 +82,29 @@
     comms: () => pickGroup("Radio", "Sends the data home. Faster radios use more power.", "comms", MD.COMMS, (c) => `${c.rateMbps} Mbps · ${c.txW} W · ${c.mass} kg · ${c.cost} M`),
   };
 
+  // flat side view of the spacecraft that changes with the choices (drawn in code, no images)
+  function craftSVG(d) {
+    const size = { u3: [60, 60], u6: [100, 60], u12: [100, 100] }[d.bus], bw = size[0], bh = size[1], cx = 160, cy = 90;
+    const x0 = cx - bw / 2, y0 = cy - bh / 2, g = [];
+    if (d.solar === "wings") for (const sgn of [-1, 1]) g.push(`<rect x="${sgn < 0 ? x0 - 62 : x0 + bw + 6}" y="${cy - 24}" width="56" height="48" fill="#26323f" stroke="#a0a0a0"/>`);
+    else g.push(`<rect x="${x0 + 4}" y="${y0 + 4}" width="${bw - 8}" height="6" fill="#26323f"/>`);
+    g.push(`<rect x="${x0}" y="${y0}" width="${bw}" height="${bh}" rx="4" fill="#222" stroke="#e0703f" stroke-width="2"/>`);
+    const batW = { s: 14, m: 28, l: 44 }[d.battery]; g.push(`<rect x="${x0 + 8}" y="${y0 + bh - 16}" width="${batW}" height="8" fill="#a0a0a0"/>`);
+    d.payloads.forEach((p, i) => g.push(`<circle cx="${x0 + 16 + i * 24}" cy="${y0 + 20}" r="8" fill="${MD.PAYLOADS[p].tags.includes("imaging") ? "#e0703f" : "#ff9a6e"}"/>`));
+    const ant = { uhf: 14, sband: 26, xband: 40 }[d.comms]; g.push(`<line x1="${cx}" y1="${y0}" x2="${cx}" y2="${y0 - ant}" stroke="#e8e8e8" stroke-width="2"/><circle cx="${cx}" cy="${y0 - ant}" r="4" fill="#e8e8e8"/>`);
+    if (d.prop !== "none") g.push(`<polygon points="${cx - 8},${y0 + bh} ${cx + 8},${y0 + bh} ${cx},${y0 + bh + (d.prop === "electric" ? 22 : 12)}" fill="#a0a0a0"/>`);
+    const wrap = document.createElement("div");
+    wrap.innerHTML = `<svg viewBox="0 0 320 180" class="craft" role="img" aria-label="Your spacecraft: ${MD.BUSES[d.bus].name}, ${MD.SOLAR[d.solar].name}, ${d.payloads.length} instrument(s)">${g.join("")}</svg>`;
+    return wrap;
+  }
+
   function dashboard(A, sc) {
     const crit = (k) => sc.critical.includes(k) ? h("span", { class: "crit" }, "critical") : null;
     const res = (key, label, used, cap, text, over) => h("div", { class: "res" },
       h("div", { class: "row" }, h("span", {}, h("b", {}, label), crit(key)), h("span", {}, text)),
       h("div", { class: "bar " + (over ? "bad" : used / (cap || 1) > 0.9 ? "warn" : "") }, h("i", { style: `width:${clampPct((used / (cap || 1)) * 100)}%` })),
       h("p", { class: "why" }, WHY[key]));
-    return h("aside", { class: "dash card" }, h("h3", {}, "Mission dashboard"),
+    return h("aside", { class: "dash card" }, craftSVG(G.design), h("h3", {}, "Mission dashboard"),
       res("mass", "Mass", A.mass.used, A.mass.cap || 1, `${num(A.mass.used)} / ${A.mass.cap} kg`, A.mass.used > A.mass.cap),
       res("power", "Power", A.power.load, Math.max(A.power.gen, 0.1), `use ${num(A.power.load)} W / make ${num(A.power.gen)} W`, A.power.gen < A.power.load),
       res("budget", "Budget", A.budget.used, A.budget.cap, `${num(A.budget.used)} / ${num(A.budget.cap)} M`, A.budget.used > A.budget.cap),
