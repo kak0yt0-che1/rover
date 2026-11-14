@@ -199,4 +199,86 @@ module.exports = async function (H) {
     expect((await page.locator('.pick[aria-pressed="true"]').count()) >= 5, "selected options should expose aria-pressed");
     await page.ctx.close();
   });
+  // 11. share link: copy, open in a new page, same design loads; junk link ignored
+  await test("share link round trip and invalid link", async (problems) => {
+    const page = await newPage({ width: 1366, height: 768 }, problems);
+    await startScenario(page, "aurora", "Hard");
+    await setDesign(page, SOL.aurora[1]);
+    await btn(page, "Copy share link").click();
+    const url = await page.locator('input[aria-label="Share link"]').inputValue();
+    expect(/#d=aurora.hard./.test(url), "unexpected link " + url);
+    const page2 = await newPage({ width: 1366, height: 768 }, problems);
+    await page2.goto(url);
+    await page2.locator("button", { hasText: "Launch mission" }).waitFor();
+    expect((await pick(page2, "3U bus").getAttribute("aria-pressed")) === "true", "3U bus not loaded from link");
+    expect((await pick(page2, "Plasma wave receiver").getAttribute("aria-pressed")) === "true", "payload not loaded from link");
+    expect((await page2.locator("text=Opened from a share link").count()) === 1, "no note about the link");
+    const page3 = await newPage({ width: 1366, height: 768 }, problems);
+    await page3.goto(H.getBase() + "mission.html#d=coast.normal.small.sso.u6.wings.m.sband.camera+evil.none.single");
+    await page3.locator("text=not valid").waitFor();
+    await page.ctx.close(); await page2.ctx.close(); await page3.ctx.close();
+  });
+
+  // 12. compare two saved designs
+  await test("compare two saved designs side by side", async (problems) => {
+    const page = await newPage({ width: 1366, height: 768 }, problems);
+    await startScenario(page, "coast", "Normal");
+    await setDesign(page, SOL.coast[0]); await btn(page, "Save this design").click();
+    await pick(page, "X-band radio").click(); await btn(page, "Save this design").click();
+    await btn(page, "Back to missions").click();
+    await page.locator('input[type="checkbox"]').nth(0).check(); 
+    expect(await btn(page, "Compare selected").isDisabled(), "compare needs two");
+    await page.locator('input[type="checkbox"]').nth(1).check();
+    await btn(page, "Compare selected").click();
+    await page.locator("h1", { hasText: "Compare designs" }).waitFor();
+    const text = await page.locator("table.cmp").innerText();
+    expect(/S-band radio/.test(text) && /X-band radio/.test(text) && text.includes("Score (seed 1)"), "comparison table incomplete: " + text.replace(/\s+/g, " ").slice(200, 800));
+    await page.ctx.close();
+  });
+
+  // 13. sandbox: a design a scored mission rejects can still fly, and is not scored
+  await test("sandbox: breaks limits, still flies, unscored", async (problems) => {
+    const page = await newPage({ width: 1366, height: 768 }, problems);
+    await page.goto(H.getBase() + "mission.html"); await page.evaluate(() => { try { localStorage.clear(); } catch (e) {} }); await page.reload();
+    await pick(page, "Sandbox (unscored)").click(); await btn(page, "Start designing").click();
+    await pick(page, "Polar orbit, 550 km").click(); // rideshare cannot reach polar
+    expect(await launchEnabled(page), "sandbox must allow launch");
+    await btn(page, "Launch mission").click();
+    await page.locator("text=Sandbox run. Science returned").waitFor();
+    expect((await page.locator(".big-total").count()) === 0 && (await page.locator("button", { hasText: "Add to leaderboard" }).count()) === 0, "sandbox must not show a score or leaderboard button");
+    await page.ctx.close();
+  });
+
+  // 14. competition: 3 teams, same seed, ranking
+  await test("team competition: three teams then ranking", async (problems) => {
+    const page = await newPage({ width: 1366, height: 768 }, problems);
+    await page.goto(H.getBase() + "mission.html"); await page.evaluate(() => { try { localStorage.clear(); } catch (e) {} }); await page.reload();
+    await pick(page, "Team competition").click(); await pick(page, "Easy").click(); await btn(page, "3 teams").click();
+    await btn(page, "Start designing").click();
+    for (let t = 0; t < 3; t++) {
+      expect((await page.locator("text=is designing (team " + (t + 1) + " of 3)").count()) === 1, "banner for team " + (t + 1));
+      if (t === 1) await pick(page, "Multispectral imager").click();
+      if (t === 2) await pick(page, "UHF radio").click();
+      await btn(page, "Launch mission").click();
+      await page.locator("h1", { hasText: OUT }).waitFor();
+      await page.locator("button", { hasText: t === 2 ? "See the ranking" : "Pass to Team " + (t + 2) }).click();
+    }
+    await page.locator("h1", { hasText: "Team ranking" }).waitFor();
+    const scores = (await page.locator("table.cmp tbody tr td:nth-child(3)").allTextContents()).map(Number);
+    expect(scores.length === 3 && scores.every((v, i) => i === 0 || scores[i - 1] >= v), "ranking not sorted: " + scores);
+    await page.ctx.close();
+  });
+
+  // 15. delta against the previous run
+  await test("post-mission delta names what changed", async (problems) => {
+    const page = await newPage({ width: 1366, height: 768 }, problems);
+    await startScenario(page, "coast", "Normal");
+    await setDesign(page, SOL.coast[0]);
+    await btn(page, "Launch mission").click(); await page.locator(".big-total").waitFor();
+    expect((await page.locator("h3", { hasText: "Compared with your last run" }).count()) === 0, "no delta on the first run");
+    await btn(page, "Redesign").click(); await pick(page, "X-band radio").click();
+    await btn(page, "Launch mission").click(); await page.locator("h3", { hasText: "Compared with your last run" }).waitFor();
+    expect((await page.locator("text=You changed the radio: S-band radio to X-band radio").count()) === 1, "delta should name the radio change");
+    await page.ctx.close();
+  });
 };

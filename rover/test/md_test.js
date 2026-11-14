@@ -53,5 +53,21 @@ for (const [sc, list] of Object.entries(SOL)) {
   const [p, q] = list.map((x) => MD.analyse(x)); const rel = (u, v) => Math.abs(u - v) / Math.max(u, v);
   ok(rel(p.budget.used, q.budget.used) > 0.05 || rel(p.time.weeks, q.time.weeks) > 0.05 || rel(p.mass.used, q.mass.used) > 0.05, sc + ": the two solutions are really different designs");
 }
+
+// 9. share links round-trip and reject junk
+for (const sc of Object.keys(SOL)) for (const dd of SOL[sc]) { const back = MD.decode(MD.encode(dd)); ok(back && MD.encode(back) === MD.encode(dd), "share link round-trip " + sc); }
+ok(MD.decode("nonsense") === null && MD.decode("coast.normal.small.sso.u6.wings.m.sband.camera+hack.none.single") === null && MD.decode("__proto__.normal.small.sso.u6.wings.m.sband.camera.none.single") === null, "bad links rejected");
+ok(MD.decode("coast.normal.small.sso.u6.wings.m.sband.camera+multi+mag+plasma.none.single") === null, "too many payloads rejected");
+// 10. sandbox runs invalid designs; scored mode rejects them
+const bad = D("coast", { launcher: "rideshare", orbit: "polar" });
+ok(MD.simulate(bad, 1).outcome === "rejected" && MD.simulate(bad, 1, { sandbox: true }).outcome !== "rejected", "sandbox runs what a scored mission rejects");
+ok(MD.simulate(bad, 1, { sandbox: true }).reasons[0].startsWith("Sandbox run"), "sandbox says it is unscored");
+// 11. delta between runs
+{ const a = SOL.coast[0], b2 = Object.assign({}, a, { comms: "xband" }); const ra = MD.simulate(a, 5), rb = MD.simulate(b2, 5);
+  const dl = MD.delta({ design: a, score: ra.score, outcome: ra.outcome }, { design: b2, score: rb.score, outcome: rb.outcome });
+  ok(dl.changes.length === 1 && dl.changes[0].key === "comms" && dl.total === rb.score.total - ra.score.total, "delta lists the one change and the score difference");
+  ok(MD.delta({ design: a, score: ra.score, outcome: ra.outcome }, { design: a, score: ra.score, outcome: ra.outcome }).sameDesign, "same design is flagged"); }
+// 12. ranking: higher score first, cheaper wins a tie
+{ const r = MD.rank([{ n: "A", score: { total: 80 }, cost: 9 }, { n: "B", score: { total: 90 }, cost: 12 }, { n: "C", score: { total: 80 }, cost: 7 }]); ok(r.map((x) => x.n).join("") === "BCA", "ranking order"); }
 console.log(report.join("\n"));
 console.log(`md_test: ${n} checks passed`);

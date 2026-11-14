@@ -15,10 +15,15 @@
     return el;
   };
 
-  const G = { phase: "setup", players: 1, role: "all", approved: new Set(), result: null, design: MD.defaultDesign("coast"), team: "Team Pathfinder" };
+  const G = { mode: "mission", compN: 2, compNames: ["Team 1", "Team 2", "Team 3", "Team 4"], comp: null, delta: null, shareUrl: "", note: "", cmpSel: new Set(), phase: "setup", players: 1, role: "all", approved: new Set(), result: null, design: MD.defaultDesign("coast"), team: "Team Pathfinder" };
   const saved = store.get("md.design", null);
   if (saved && MD.SCENARIOS[saved.scenario]) G.design = Object.assign(MD.defaultDesign(saved.scenario), saved);
   const persist = () => store.set("md.design", G.design);
+  // a share link (#d=...) opens the design it carries, after checking every part exists
+  if (/^#d=/.test(location.hash)) {
+    const dd = MD.decode(decodeURIComponent(location.hash.slice(3)));
+    if (dd) { G.design = dd; G.phase = "build"; G.note = "Opened from a share link. You can change anything."; } else G.note = "That share link is not valid, so it was ignored.";
+  }
 
   // short "why does this matter" lines, one per resource
   const WHY = {
@@ -50,6 +55,15 @@
   }
 
   function setPhase(p) { G.phase = p; render(); window.scrollTo(0, 0); const t = app.querySelector("h1"); if (t) { t.setAttribute("tabindex", "-1"); t.focus({ preventScroll: true }); } }
+  function startDesigning() {
+    G.approved.clear(); G.delta = null; G.note = "";
+    if (G.mode === "comp") {
+      const df = G.design.difficulty; G.design = MD.defaultDesign(G.design.scenario); G.design.difficulty = df;
+      G.players = 1; G.role = "all"; G.comp = { idx: 0, seed: 1000 + Math.floor(Math.random() * 9000), entries: [] };
+    } else if (G.mode === "sandbox") { G.players = 1; G.role = "all"; }
+    else G.role = G.players === 1 ? "all" : Object.keys(MD.ROLES)[0];
+    setPhase("build");
+  }
   function setD(k, v) { G.design[k] = v; G.approved.clear(); persist(); render(true); }
 
   // ------------ setup ------------
@@ -67,12 +81,19 @@
           h("button", { class: "pick", "aria-pressed": G.design.difficulty === id, onclick: () => { G.design.difficulty = id; persist(); render(); } }, h("b", {}, d.name),
             h("span", { class: "nums" }, `budget x${d.budget}, deadline x${d.weeks}, events x${d.events}`)))),
         h("p", { class: "why" }, "Harder games have less money, less time and more surprises. There is no single perfect design at any level.")),
-      h("div", { class: "grp" }, h("h3", {}, "3. Players"),
+      h("div", { class: "grp" }, h("h3", {}, "3. Mode"),
+        h("div", { class: "chips" }, [["mission", "Scored mission"], ["sandbox", "Sandbox (unscored)"], ["comp", "Team competition"]].map(([id, name]) =>
+          h("button", { class: "pick", "aria-pressed": G.mode === id, onclick: () => { G.mode = id; if (id !== "mission") { G.players = 1; G.role = "all"; } render(); } }, h("b", {}, name)))),
+        h("p", { class: "why" }, { mission: "Limits are enforced and the mission is scored. Play solo or in a team with roles.", sandbox: "Free experiments: every part is open and limits only warn. Nothing is scored, so try wild ideas and see what breaks.", comp: "Two to four teams each design their own spacecraft for the same mission, one after another. Everyone gets the same random events. The best score wins." }[G.mode]),
+        G.mode === "comp" ? h("div", {}, h("div", { class: "chips" }, [2, 3, 4].map((n) => h("button", { class: "pick", "aria-pressed": G.compN === n, onclick: () => { G.compN = n; render(); } }, n + " teams"))),
+          h("p", {}, G.compNames.slice(0, G.compN).map((nm, i) => h("label", { style: "margin-right:16px" }, `Team ${i + 1} name `, h("input", { class: "txt", value: nm, maxlength: 20, oninput: (e) => { G.compNames[i] = e.target.value || "Team " + (i + 1); } }))))) : null),
+      G.mode !== "mission" ? null : h("div", { class: "grp" }, h("h3", {}, "4. Players"),
         h("div", { class: "chips" }, [1, 2, 3, 4].map((n) => h("button", { class: "pick", "aria-pressed": G.players === n, onclick: () => { G.players = n; G.role = n === 1 ? "all" : Object.keys(MD.ROLES)[0]; render(); } }, n === 1 ? "Solo" : n + " players"))),
         h("p", { class: "why" }, G.players === 1 ? "You hold every role." : "Pass the screen around. Each person owns some choices (a role) and the launch needs every role to approve. Talk it out: your choices change each other's numbers."),
         G.players > 1 ? h("p", {}, h("label", {}, "Team name ", h("input", { class: "txt", value: G.team, maxlength: 24, oninput: (e) => { G.team = e.target.value; } }))) : null),
       h("div", { class: "scenario-brief hint" }, h("b", {}, MD.SCENARIOS[sc].title + ": "), MD.SCENARIOS[sc].hint, h("br"), h("span", { class: "dim small" }, MD.SCENARIOS[sc].real)),
-      h("button", { class: "btn primary big", onclick: () => { G.approved.clear(); G.role = G.players === 1 ? "all" : Object.keys(MD.ROLES)[0]; setPhase("build"); } }, "Start designing"),
+      G.note ? h("div", { class: "msg", role: "status" }, G.note) : null,
+      h("button", { class: "btn primary big", onclick: startDesigning }, "Start designing"),
       leaderboard(), savedDesigns());
   }
 
@@ -138,7 +159,8 @@
   function build() {
     const d = G.design, sc = MD.SCENARIOS[d.scenario], A = MD.analyse(d), roles = Object.keys(MD.ROLES);
     const owned = G.role === "all" ? ["launcher", "orbit", "ground", "bus", "solar", "battery", "prop", "payloads", "comms"] : roleKeys(G.role);
-    const panel = [tourCard(), h("div", { class: "hint" }, h("b", {}, sc.title + ": "), sc.objective, " ", sc.hint)];
+    const banner = G.mode === "sandbox" ? "Sandbox: limits only warn here and nothing is scored." : G.mode === "comp" && G.comp ? `${G.compNames[G.comp.idx]} is designing (team ${G.comp.idx + 1} of ${G.compN}). Same mission and same random events for every team. One launch per team.` : "";
+    const panel = [banner ? h("div", { class: "msg", role: "status" }, banner) : null, G.note ? h("div", { class: "msg", role: "status" }, G.note) : null, tourCard(), h("div", { class: "hint" }, h("b", {}, sc.title + ": "), sc.objective, " ", sc.hint)];
     if (G.players > 1) {
       panel.push(h("div", { class: "roles", role: "tablist" }, roles.map((r) => h("button", { role: "tab", "aria-selected": G.role === r, class: G.approved.has(r) ? "ok" : "", onclick: () => { G.role = r; render(); } }, `${MD.ROLES[r].name}`))));
       const r = MD.ROLES[G.role];
@@ -149,7 +171,7 @@
       h("button", { class: "btn", onclick: () => { G.approved.has(G.role) ? G.approved.delete(G.role) : G.approved.add(G.role); render(true); } }, G.approved.has(G.role) ? "Take back approval" : `Approve as ${MD.ROLES[G.role].name}`),
       h("span", { class: "dim small" }, `Approved: ${G.approved.size} of ${roles.length}. Changing any choice clears approvals, so the team talks again.`)));
     const canGoNote = A.valid ? "" : "Launch is blocked: " + A.problems.length + " problem(s) to fix.";
-    const canGo = A.valid && (G.players === 1 || G.approved.size === roles.length);
+    const canGo = G.mode === "sandbox" ? d.payloads.length > 0 : A.valid && (G.players === 1 || G.approved.size === roles.length);
     return h("div", {},
       h("div", { class: "steps" }, h("span", {}, "1 Mission"), h("span", { class: "on", "aria-current": "step" }, "2 Design"), h("span", {}, "3 Launch and results")),
       h("h1", {}, "Design your spacecraft"),
@@ -157,16 +179,33 @@
       h("div", { class: "row-actions" },
         h("button", { class: "btn", onclick: () => setPhase("setup") }, "Back to missions"),
         h("button", { class: "btn", onclick: () => saveDesign(A) }, "Save this design"),
+        G.mode === "comp" ? null : h("button", { class: "btn", onclick: shareLink }, "Copy share link"),
         h("button", { class: "btn primary big", disabled: !canGo, onclick: launch }, "Launch mission"),
-        !A.valid ? h("span", { class: "dim small", role: "status" }, canGoNote + " Fix the items marked in the dashboard first.") : G.players > 1 && !canGo ? h("span", { class: "dim small" }, "Every role must approve.") : null));
+        G.shareUrl ? h("input", { class: "txt", readonly: true, value: G.shareUrl, "aria-label": "Share link", style: "min-width:260px", onfocus: (e) => e.target.select() }) : null,
+        G.mode === "sandbox" && !A.valid ? h("span", { class: "dim small", role: "status" }, "Sandbox: this design breaks " + A.problems.length + " limit(s). You can still launch it.") : !A.valid ? h("span", { class: "dim small", role: "status" }, canGoNote + " Fix the items marked in the dashboard first.") : G.players > 1 && !canGo ? h("span", { class: "dim small" }, "Every role must approve.") : null));
   }
   function roleKeys(r) { return { planner: ["launcher", "orbit", "ground"], craft: ["bus", "solar", "battery", "prop"], science: ["payloads"], comms: ["comms"] }[r]; }
 
   // ------------ launch + results ------------
+  function shareLink() {
+    G.shareUrl = location.href.split("#")[0] + "#d=" + MD.encode(G.design);
+    try { navigator.clipboard.writeText(G.shareUrl).catch(() => {}); } catch (e) { /* the link is shown in a box anyway */ }
+    render(true);
+  }
   function launch() {
-    G.design.seed = (G.design.seed || 7) + 1; persist();
-    G.result = MD.simulate(G.design, G.design.seed);
+    const sc = G.design.scenario; let r;
+    if (G.mode === "comp") r = MD.simulate(G.design, G.comp.seed);
+    else { G.design.seed = (G.design.seed || 7) + 1; persist(); r = MD.simulate(G.design, G.design.seed, { sandbox: G.mode === "sandbox" }); }
+    G.result = r; G.delta = null; G.shareUrl = "";
+    const cur = { design: JSON.parse(JSON.stringify(G.design)), score: r.score, outcome: r.outcome };
+    if (G.mode === "mission" && r.outcome !== "rejected") { const key = "md.last." + sc; G.delta = MD.delta(store.get(key, null), cur); store.set(key, cur); }
+    if (G.mode === "comp") G.comp.entries[G.comp.idx] = { name: G.compNames[G.comp.idx], design: cur.design, score: r.score, outcome: r.outcome, science: r.science, cost: r.analysis.budget.used };
     setPhase("result");
+  }
+  function nextTeam() {
+    const df = G.design.difficulty, sc = G.design.scenario;
+    if (G.comp.idx + 1 >= G.compN) { setPhase("rank"); return; }
+    G.comp.idx++; G.design = MD.defaultDesign(sc); G.design.difficulty = df; setPhase("build");
   }
 
   function chart(R, sc) {
@@ -189,27 +228,70 @@
   const OUT = { success: "Mission success", partial: "Partial success", failed: "Mission fell short", lost: "Spacecraft lost", rejected: "Design rejected before launch" };
 
   function result() {
-    const R = G.result, sc = MD.SCENARIOS[G.design.scenario], S = R.score, p = S.parts;
+    const R = G.result, sc = MD.SCENARIOS[G.design.scenario], S = R.score, p = S.parts, sandbox = G.mode === "sandbox", comp = G.mode === "comp";
     return h("div", {},
       h("div", { class: "steps" }, h("span", {}, "1 Mission"), h("span", {}, "2 Design"), h("span", { class: "on", "aria-current": "step" }, "3 Launch and results")),
-      h("h1", {}, OUT[R.outcome]), h("div", { class: "big-total" }, S.total, h("span", { class: "dim small" }, " / 100")),
-      h("div", { class: "score" }, [["Mission performance", p.performance, 30], ["Science value", p.science, 20], ["Resource efficiency", p.efficiency, 20], ["Decision quality", p.decisions, 15], ["Teamwork", p.collab, 15]]
+      h("h1", {}, (comp ? G.compNames[G.comp.idx] + ": " : "") + OUT[R.outcome]),
+      sandbox ? h("p", { class: "msg", role: "status" }, "Sandbox run. Science returned: " + R.science.toFixed(0) + " of " + sc.target + ". Nothing is scored.") : h("div", { class: "big-total" }, S.total, h("span", { class: "dim small" }, " / 100")),
+      sandbox ? null : h("div", { class: "score" }, [["Mission performance", p.performance, 30], ["Science value", p.science, 20], ["Resource efficiency", p.efficiency, 20], ["Decision quality", p.decisions, 15], ["Teamwork", p.collab, 15]]
         .map(([n, v, m]) => h("div", {}, h("b", {}, `${v}/${m}`), h("span", {}, n)))),
       R.days.length ? chart(R, sc) : null,
+      G.delta ? deltaPanel(G.delta) : null,
       h("div", { class: "grp" }, h("h3", {}, "Why it went this way"),
         h("ul", { class: "tight" }, R.reasons.map((r) => h("li", {}, r))),
         R.events.length ? h("p", { class: "small dim" }, "Events this run: " + R.events.map((e) => `day ${e.day} ${e.title}`).join(", ")) : h("p", { class: "small dim" }, "No events this run. Try another launch: the surprises change each time.")),
-      h("div", { class: "grp" }, h("h3", {}, "Role check"),
+      sandbox ? null : h("div", { class: "grp" }, h("h3", {}, "Role check"),
         h("ul", { class: "tight" }, S.roles.map((r) => h("li", {}, `${r.name}: ${r.ok ? "goal met" : "goal not met"}`)))),
       R.analysis.warnings.length ? h("div", { class: "grp" }, h("h3", {}, "Things to improve"), R.analysis.warnings.map((w) => h("div", { class: "msg warn" }, w))) : null,
       h("p", { class: "small dim" }, "Score = performance 30 + science 20 + efficiency 20 + decisions 15 + teamwork 15. Several different designs can score well. Model is simplified; see README."),
-      h("div", { class: "row-actions" },
-        h("button", { class: "btn primary", onclick: () => setPhase("build") }, "Redesign"),
-        h("button", { class: "btn", onclick: launch }, "Fly again (new surprises)"),
-        h("button", { class: "btn", onclick: () => saveDesign(R.analysis, S.total) }, "Save design"),
-        h("button", { class: "btn", onclick: () => submitBoard(S.total) }, "Add to leaderboard"),
-        h("button", { class: "btn ghost", onclick: () => setPhase("setup") }, "New mission")),
-      savedDesigns());
+      comp ? h("div", { class: "row-actions" }, h("button", { class: "btn primary big", onclick: nextTeam }, G.comp.idx + 1 >= G.compN ? "See the ranking" : `Pass to ${G.compNames[G.comp.idx + 1]}`))
+        : h("div", { class: "row-actions" },
+          h("button", { class: "btn primary", onclick: () => setPhase("build") }, "Redesign"),
+          h("button", { class: "btn", onclick: launch }, "Fly again (new surprises)"),
+          h("button", { class: "btn", onclick: () => saveDesign(R.analysis, sandbox ? null : S.total) }, "Save design"),
+          sandbox ? null : h("button", { class: "btn", onclick: () => submitBoard(S.total) }, "Add to leaderboard"),
+          h("button", { class: "btn ghost", onclick: () => setPhase("setup") }, "New mission")),
+      comp ? null : savedDesigns());
+  }
+
+  const PART = { performance: "mission performance", science: "science value", efficiency: "resource efficiency", decisions: "decision quality", collab: "teamwork" };
+  const sgn = (n) => (n > 0 ? "+" + n : String(n));
+  function deltaPanel(dl) {
+    const items = [];
+    if (dl.sameDesign) items.push(h("li", {}, `You flew the same design again. The score moved by ${sgn(dl.total)} only because the random events were different this time.`));
+    else {
+      items.push(h("li", {}, `Score ${sgn(dl.total)} compared with your last run of this mission.` + (dl.outcomeFrom !== dl.outcomeTo ? ` Outcome: ${OUT[dl.outcomeFrom]} to ${OUT[dl.outcomeTo]}.` : "")));
+      dl.changes.forEach((c) => items.push(h("li", {}, `You changed the ${c.label}: ${c.from} to ${c.to}.`)));
+      if (dl.biggest) items.push(h("li", {}, `The biggest score change was ${PART[dl.biggest[0]]} (${sgn(dl.biggest[1])} points). Random events can also move the score, so check the report above.`));
+    }
+    return h("div", { class: "grp" }, h("h3", {}, "Compared with your last run"), h("ul", { class: "tight" }, items));
+  }
+  function rank() {
+    const sc = MD.SCENARIOS[G.design.scenario], list = MD.rank(G.comp.entries);
+    return h("div", {},
+      h("h1", {}, "Team ranking"),
+      h("p", { class: "dim" }, `${sc.title}, ${MD.DIFFICULTY[G.design.difficulty].name}. Every team flew with the same random events. Ties go to the cheaper design.`),
+      h("table", { class: "cmp" }, h("thead", {}, h("tr", {}, ["Rank", "Team", "Score", "Outcome", "Science", "Cost (M)"].map((t) => h("th", {}, t)))),
+        h("tbody", {}, list.map((e, i) => h("tr", {}, h("td", {}, i + 1), h("td", {}, e.name), h("td", {}, e.score.total), h("td", {}, OUT[e.outcome]), h("td", {}, e.science.toFixed(0)), h("td", {}, e.cost.toFixed(1)))))),
+      h("p", { class: "small dim" }, "Look at how the top teams differ: different designs can both do well."),
+      h("div", { class: "row-actions" }, h("button", { class: "btn primary", onclick: () => { G.mode = "comp"; startDesigning(); } }, "Play again with the same teams"), h("button", { class: "btn", onclick: () => setPhase("setup") }, "New mission")));
+  }
+  function compare() {
+    const list = store.get("md.saved", []), picks = [...G.cmpSel].map((i) => list[i]).filter(Boolean);
+    if (picks.length !== 2) { return h("div", {}, h("h1", {}, "Compare designs"), h("p", {}, "Select two saved designs first."), h("button", { class: "btn", onclick: () => setPhase("setup") }, "Back")); }
+    const rows = picks.map((p) => { const d = Object.assign(MD.defaultDesign(p.d.scenario), p.d), A = MD.analyse(d), r = MD.simulate(d, 1); return { d, A, r }; });
+    const line = (label, f) => h("tr", {}, h("th", { scope: "row" }, label), rows.map((x) => h("td", {}, f(x))));
+    return h("div", {},
+      h("h1", {}, "Compare designs"),
+      h("p", { class: "dim" }, "Both designs were flown with the same random seed, so the comparison is fair."),
+      h("table", { class: "cmp" }, h("thead", {}, h("tr", {}, h("th", {}, ""), h("th", {}, "Design A"), h("th", {}, "Design B"))),
+        h("tbody", {},
+          line("Mission", (x) => MD.SCENARIOS[x.d.scenario].title + ", " + MD.DIFFICULTY[x.d.difficulty].name), line("Rocket", (x) => MD.LAUNCHERS[x.d.launcher].name), line("Orbit", (x) => MD.ORBITS[x.d.orbit].name),
+          line("Bus and panels", (x) => MD.BUSES[x.d.bus].name + ", " + MD.SOLAR[x.d.solar].name), line("Instruments", (x) => x.d.payloads.map((p) => MD.PAYLOADS[p].name).join(", ") || "none"), line("Radio", (x) => MD.COMMS[x.d.comms].name),
+          line("Mass (kg)", (x) => num(x.A.mass.used) + " of " + x.A.mass.cap), line("Power (W)", (x) => "make " + num(x.A.power.gen) + ", use " + num(x.A.power.load)), line("Budget (M)", (x) => num(x.A.budget.used) + " of " + num(x.A.budget.cap)),
+          line("Data per day (GB)", (x) => "make " + num(x.A.data.perDay, 2) + ", send " + num(x.A.comms.downGB, 2)), line("Weeks to launch", (x) => num(x.A.time.weeks, 0) + " of " + num(x.A.time.deadline, 0)),
+          line("Result (seed 1)", (x) => OUT[x.r.outcome]), line("Score (seed 1)", (x) => x.r.score.total))),
+      h("div", { class: "row-actions" }, h("button", { class: "btn", onclick: () => setPhase("setup") }, "Back")));
   }
 
   // ------------ saved designs & leaderboard (local to this browser) ------------
@@ -222,10 +304,12 @@
     const list = store.get("md.saved", []);
     if (!list.length) return null;
     return h("div", { class: "grp card" }, h("h3", {}, "Saved designs (compare)"),
-      h("table", { class: "cmp" }, h("thead", {}, h("tr", {}, ["Mission", "Rocket", "Orbit", "Cost M", "Mass kg", "Score", ""].map((t) => h("th", {}, t)))),
-        h("tbody", {}, list.map((s, i) => h("tr", {}, h("td", {}, MD.SCENARIOS[s.d.scenario].title), h("td", {}, MD.LAUNCHERS[s.d.launcher].name), h("td", {}, s.d.orbit), h("td", {}, s.cost), h("td", {}, s.mass), h("td", {}, s.total == null ? "not flown" : s.total),
+      h("p", { class: "small dim" }, "Tick two designs to compare them side by side."),
+      h("button", { class: "btn small", disabled: G.cmpSel.size !== 2, onclick: () => setPhase("compare") }, "Compare selected"),
+      h("table", { class: "cmp" }, h("thead", {}, h("tr", {}, ["Pick", "Mission", "Rocket", "Orbit", "Cost M", "Mass kg", "Score", ""].map((t) => h("th", {}, t)))),
+        h("tbody", {}, list.map((s, i) => h("tr", {}, h("td", {}, h("input", { type: "checkbox", "aria-label": "Select saved design " + (i + 1) + " for comparison", checked: G.cmpSel.has(i) || null, onchange: (e) => { if (e.target.checked) { if (G.cmpSel.size >= 2) { e.target.checked = false; return; } G.cmpSel.add(i); } else G.cmpSel.delete(i); render(true); } })), h("td", {}, MD.SCENARIOS[s.d.scenario].title), h("td", {}, MD.LAUNCHERS[s.d.launcher].name), h("td", {}, s.d.orbit), h("td", {}, s.cost), h("td", {}, s.mass), h("td", {}, s.total == null ? "not flown" : s.total),
           h("td", {}, h("button", { class: "btn small", onclick: () => { G.design = Object.assign(MD.defaultDesign(s.d.scenario), s.d); persist(); setPhase("build"); } }, "Load"), " ",
-            h("button", { class: "btn small ghost", "aria-label": "Delete saved design", onclick: () => { list.splice(i, 1); store.set("md.saved", list); render(true); } }, "Delete")))))));
+            h("button", { class: "btn small ghost", "aria-label": "Delete saved design", onclick: () => { list.splice(i, 1); store.set("md.saved", list); G.cmpSel.clear(); render(true); } }, "Delete")))))));
   }
   function submitBoard(total) {
     const b = store.get("md.board", []);
@@ -253,7 +337,7 @@
 
   function render(keepScroll) {
     const y = window.scrollY;
-    app.replaceChildren(G.phase === "setup" ? setup() : G.phase === "build" ? build() : result());
+    app.replaceChildren(G.phase === "setup" ? setup() : G.phase === "build" ? build() : G.phase === "rank" ? rank() : G.phase === "compare" ? compare() : result());
     if (keepScroll) window.scrollTo(0, y);
   }
   globalThis.MR.mdDebug = { G, render, launch };

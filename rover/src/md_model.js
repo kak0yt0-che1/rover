@@ -187,12 +187,14 @@
 
   // ---------- simulation ----------
   // Runs the mission day by day. Returns { outcome, days: [...], events, score, reasons }.
-  MD.simulate = function (d, seed) {
+  // opts.sandbox: run even if the design breaks a limit (nothing is scored); the breakage is reported instead.
+  MD.simulate = function (d, seed, opts) {
+    opts = opts || {};
     const A = MD.analyse(d), sc = MD.SCENARIOS[d.scenario], df = MD.DIFFICULTY[d.difficulty] || MD.DIFFICULTY.normal;
     const la = MD.LAUNCHERS[d.launcher], sol = MD.SOLAR[d.solar], bus = MD.BUSES[d.bus], bat = MD.BATTERY[d.battery];
     const rng = MR.rng(seed != null ? seed : d.seed);
     const out = { analysis: A, days: [], events: [], outcome: "", cause: "", science: 0, lessons: [] };
-    if (!A.valid) { out.outcome = "rejected"; out.cause = "design"; out.reasons = A.problems.slice(); out.score = MD.score(d, A, out); return out; }
+    if (!A.valid && !opts.sandbox) { out.outcome = "rejected"; out.cause = "design"; out.reasons = A.problems.slice(); out.score = MD.score(d, A, out); return out; }
 
     // launch
     if (rng() > la.reliability) {
@@ -243,6 +245,7 @@
     out.outcome = dead ? "lost" : ratio >= 1 ? "success" : ratio >= 0.5 ? "partial" : "failed";
     out.cause = dead ? "power" : ratio >= 1 ? "ok" : lostData > 0 && ratio < 1 ? "data" : A.science.potential < sc.target ? "science" : "ops";
     out.reasons = MD.explain(d, A, out, sc);
+    if (opts.sandbox) { out.sandbox = true; out.reasons.unshift("Sandbox run: nothing is scored." + (A.valid ? "" : " The design breaks limits that a scored mission would enforce: " + A.problems.join(" "))); }
     out.score = MD.score(d, A, out);
     return out;
   };
@@ -293,5 +296,45 @@
     return { parts, total, roles: Object.keys(MD.ROLES).map((k, i) => ({ id: k, name: MD.ROLES[k].name, ok: !!roleOk[i] })) };
   };
 
-  // seeds with several tries: the best of 5 is not offered; the same seed replays exactly.
+  // ---------- share links ----------
+  // A design is written as dot-separated names so it fits in a URL hash: coast.normal.small.sso.u6.wings.m.sband.camera+multi.none.single
+  MD.encode = function (d) {
+    return [d.scenario, d.difficulty, d.launcher, d.orbit, d.bus, d.solar, d.battery, d.comms, d.payloads.join("+") || "-", d.prop, d.ground].join(".");
+  };
+  // Never trust a link: every token must exist in the catalogues, otherwise null.
+  MD.decode = function (str) {
+    const t = String(str || "").split(".");
+    if (t.length !== 11) return null;
+    const [scenario, difficulty, launcher, orbit, bus, solar, battery, comms, pl, prop, ground] = t;
+    const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+    const payloads = pl === "-" ? [] : pl.split("+");
+    if (!(has(MD.SCENARIOS, scenario) && has(MD.DIFFICULTY, difficulty) && has(MD.LAUNCHERS, launcher) && has(MD.ORBITS, orbit) && has(MD.BUSES, bus) && has(MD.SOLAR, solar) &&
+      has(MD.BATTERY, battery) && has(MD.COMMS, comms) && has(MD.PROP, prop) && has(MD.GROUND, ground) && payloads.length <= 3 && payloads.every((p) => has(MD.PAYLOADS, p)))) return null;
+    return Object.assign(MD.defaultDesign(scenario), { scenario, difficulty, launcher, orbit, bus, solar, battery, comms, payloads, prop, ground });
+  };
+
+  // ---------- what changed since the previous run ----------
+  const LABEL = { launcher: "rocket", orbit: "orbit", bus: "bus", solar: "solar panels", battery: "battery", comms: "radio", prop: "propulsion", ground: "ground stations", payloads: "instruments" };
+  const NAMEOF = { launcher: MD.LAUNCHERS, orbit: MD.ORBITS, bus: MD.BUSES, solar: MD.SOLAR, battery: MD.BATTERY, comms: MD.COMMS, prop: MD.PROP, ground: MD.GROUND };
+  const nm = (k, v) => (k === "payloads" ? (v.length ? v.map((p) => MD.PAYLOADS[p].name).join(" + ") : "none") : NAMEOF[k][v].name);
+  // prev and cur are { design, score:{parts,total}, outcome }. Returns plain facts, no guessing about causes beyond the score parts.
+  MD.delta = function (prev, cur) {
+    if (!prev || !cur) return null;
+    const changes = [];
+    for (const k of Object.keys(LABEL)) {
+      const a = k === "payloads" ? prev.design[k].slice().sort().join() : prev.design[k], b = k === "payloads" ? cur.design[k].slice().sort().join() : cur.design[k];
+      if (a !== b) changes.push({ key: k, label: LABEL[k], from: nm(k, prev.design[k]), to: nm(k, cur.design[k]) });
+    }
+    const parts = {};
+    for (const k of Object.keys(cur.score.parts)) parts[k] = cur.score.parts[k] - prev.score.parts[k];
+    const biggest = Object.entries(parts).sort((x, y) => Math.abs(y[1]) - Math.abs(x[1]))[0];
+    return { total: cur.score.total - prev.score.total, parts, changes, outcomeFrom: prev.outcome, outcomeTo: cur.outcome, biggest: biggest && biggest[1] !== 0 ? biggest : null,
+      sameDesign: changes.length === 0 && prev.design.difficulty === cur.design.difficulty };
+  };
+
+  // ---------- competition ----------
+  // Teams fly the same scenario with the same seed. Returns teams sorted by score, ties broken by lower cost.
+  MD.rank = function (teams) {
+    return teams.slice().sort((a, b) => b.score.total - a.score.total || a.cost - b.cost);
+  };
 })();
