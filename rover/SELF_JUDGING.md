@@ -1,13 +1,13 @@
-# Self-judging (honest, 1 to 5)
+# Self-judging (1 to 5; my own opinion, not an independent score)
 
-Criteria (from the 2025 guide as quoted by a search result; re-check the 2026 guide): Impact, Creativity, Validity, Relevance, Presentation, all weighted equally.
+Criteria paraphrased from `../REQUIREMENTS_2026.md`: Influence (Impact), Creativity, Validity, Relevance, Presentation.
 
-| Criterion | Score | Evidence | Weakest part |
+| Criterion | Score | Evidence | Biggest weakness |
 |---|---|---|---|
-| Impact | 3 | Teaches trade-offs (power vs data vs cost) in a short play; replayable; works in a browser with no install | No classroom material, no measured learning effect |
-| Creativity | 4 | Visual block rule editor for a Mars rover (if / else if / else); mission design with roles and random events | Mission Design page has no spacecraft drawing |
-| Validity | 3 | `node test/md_test.js` (78 checks), `node test/console_test.js`, `node test/balance_test.js` pass; real Jezero terrain; Mars numbers checked in `src/config.js` | Mission Design catalogue values are game numbers, not real vehicle data |
-| Relevance | 4 | Covers rocket and orbit choice, mass check, six resources, roles, scenarios, events, post-mission analysis | Missing: sandbox mode, competitive team mode, share link |
-| Presentation | 2 | README, DEMO.md, SUBMISSION.md drafted | No video, no screenshots in the repo, no public build |
+| Influence | 3 | Free, browser only, no install; tour and "why" text; teams and competition for classrooms; axe clean and a keyboard path test | No classroom material, no real users tested, no learning measured |
+| Creativity | 4 | Roles with shared approval; sandbox; share links; "what changed since last run" report; second game with visual if/else rule blocks | The core loop (pick parts, launch, read report) is a familiar idea |
+| Validity | 3 | 95 model checks; balance table over 2000 seeds per cell; formulas and simplifications page; 4 NASA facts opened and cited | Game numbers are invented; no real orbit mechanics; CubeSat figures unsourced |
+| Relevance | 4 | Each part of the challenge statement maps to a feature (COMPLIANCE.md); 32 click tests | Missing: printable report, shared online leaderboard, onboard computer and attitude control |
+| Presentation | 3 | README, landing page, 26.6 s demo video (webm), 7-slide PDF, 14 screenshots | Not published; video has no voice; team names and URL are placeholders; no mp4 |
 
-Weakest: Presentation. Next actions: screenshots, public build instructions, video storyboard (done), then spacecraft drawing.
+Biggest remaining weakness: Presentation depends on human steps (public URL, upload, team names); Validity is limited by the model being simplified.

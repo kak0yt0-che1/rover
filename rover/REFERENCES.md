@@ -20,3 +20,5 @@ Mission Design catalogue numbers (`src/md_model.js`) are game values, not taken 
 | NASA Earth Observatory, Catalog of Earth Satellite Orbits | orbit card text, `model.html` (Aqua 705 km, sun-synchronous purpose, polar, geostationary) | NASA content, reused with attribution; no NASA logos used | https://science.nasa.gov/earth/earth-observatory/catalog-of-earth-satellite-orbits |
 | NASA NSSDC Moon Fact Sheet | Moon distance in lunar orbit card and `model.html` | NASA public data | https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html |
 | playwright-core 1.49.1 (dev only, not shipped) | end-to-end tests in `tools/` | Apache-2.0 | https://github.com/microsoft/playwright |
+| axe-core 4.10.2 (dev only, not shipped) | accessibility checks in `tools/e2e_tests.js` | MPL-2.0 | https://github.com/dequelabs/axe-core |
+| Playwright ffmpeg build (dev only, downloaded by `npx playwright-core install ffmpeg`, not committed) | encodes `demo/demo.webm` | see the Playwright project | https://github.com/microsoft/playwright |

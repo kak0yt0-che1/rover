@@ -1,15 +1,21 @@
-# Submission drafts (check every field name and limit against the 2026 Project Submission Guide)
+# Submission drafts (field names from ../REQUIREMENTS_2026.md; every `[ ... ]` needs a human)
 
-**Project title:** Rover Rules and Mission Design
+**Project Name:** Mission Design (with the Mars game Rover Rules)
 
-**Short summary:** A browser game where you design a small space mission (spacecraft, rocket, orbit) under six limits, fly it through random events, and learn why it worked. A second game lets you program a Mars rover with visual IF-THEN-ELSE blocks on real Jezero terrain.
+**High-Level Project Summary:** A browser game for 1 to 4 players where you design a small space mission under six limits (mass, power, budget, data, communications, time): choose a spacecraft, a rocket and an orbit, fly 30 days with random events, and read why it worked. It makes engineering trade-offs concrete for students. A second game lets you program a Mars rover with if / else rules on real Jezero crater terrain.
 
-**Detailed description:** Players pick a scenario and difficulty, then build a CubeSat-class spacecraft: bus, solar panels, battery, radio, propulsion and science instruments. They choose a launch vehicle class and an orbit. A live dashboard shows mass, power, budget, data volume, communications and time. The game blocks launches that break limits, for example a spacecraft heavier than the rocket can carry to that orbit. A 30-day simulation runs with seeded random events (solar flare, ground-station outage, instrument glitch, wing failure, launch failure). The report scores performance, science, resource efficiency, decisions and teamwork and explains the cause. One to four players can take roles (planner, spacecraft engineer, science lead, communications lead); launch needs every role to approve. Built with plain HTML, CSS and JavaScript; no server; tests run with Node.
+**Link to Project Demo:** [upload demo/demo.webm (26.6 s) or demo/slides.pdf (7 slides) to a public site and paste the link]
 
-**Space agency data used:** USGS Astrogeology Mars 2020 TRN CTX DTM mosaic (Jezero crater; derived from NASA Mars Reconnaissance Orbiter Context Camera images) for the Mars rover terrain. Elevation gives slopes and terrain types that decide rover tipping and wheel wear. NASA public pages were used for facts quoted in the Mars game (see REFERENCES.md and `src/config.js`).
+**Link to Final Project:** [public URL after deploying, see DEPLOY.md]
 
-**Other data and resources:** none; see REFERENCES.md. Mission Design numbers are simplified game values.
+**Team:** [team name], members [names]
 
-**Use of AI:** see AI_USE.md.
+**Detailed Project Description:** Players pick a scenario (Coastal Watch, Aurora Watch, Moon Scout) and a difficulty, then build a CubeSat-class spacecraft: bus, solar panels, battery, radio, propulsion and science instruments, plus a launch vehicle class, an orbit and ground stations. A live dashboard shows the six limits and marks the critical ones. The game blocks a launch that breaks a limit, for example a spacecraft too heavy for the rocket or an orbit the rocket cannot reach, and says why. A seeded 30-day simulation runs with random events (solar flare, ground-station outage, instrument glitch, wing failure, launch failure). The report scores performance, science, resource efficiency, decision quality and teamwork, explains the cause, and compares with the previous run. One to four players can hold roles (planner, spacecraft engineer, science lead, communications lead); launch needs every role's approval. Extra modes: sandbox (unscored), hot-seat team competition, share links, saved-design comparison. A quick tour and "why" text explain the concepts; model.html lists formulas and simplifications. Built with plain HTML, CSS and JavaScript (no framework, no server); tested with Node unit tests, a balance simulation of 2000 seeds per cell, and browser click tests with Playwright and axe-core.
 
-**Originality:** the code and text are our own work with AI assistance as disclosed. No third-party art, audio or code is included beyond the cited data. (A human must confirm this statement.)
+**NASA Data:** Rover Rules uses the USGS Astrogeology Mars 2020 TRN CTX DTM mosaic of Jezero crater (built from NASA Mars Reconnaissance Orbiter Context Camera images); slopes computed from it decide tipping and wheel wear. Mission Design uses facts read from NASA pages on 2026-11-15: the NASA Earth Observatory orbit catalog (sun-synchronous example Aqua at about 705 km and 99 minutes; polar orbit; geostationary altitude) and the NASA NSSDC Moon Fact Sheet (distance). They shape the orbit descriptions and model.html. All other Mission Design numbers are simplified game values, not NASA data.
+
+**Space Agency Partner & Other Data:** [confirm] No other datasets. Tools: HTML, CSS, JavaScript, Node.js, Playwright (tests, recording), axe-core (accessibility tests). Code, text and images are listed in REFERENCES.md; all visuals are drawn by our own code.
+
+**Use of Artificial Intelligence:** Yes. Claude (Anthropic) via Claude Code drafted the code, tests, texts and documents; people tested and reviewed Rover Rules, and the team is responsible for the final submission. No AI-generated images, video, audio or data. Details: AI_USE.md. [team to confirm]
+
+**Project Submission Verification:** [team confirms: work is original, external resources are listed, rules read]

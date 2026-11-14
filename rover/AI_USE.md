@@ -1,9 +1,12 @@
-# AI use disclosure (draft: a human must confirm against the 2026 submission rules)
+# AI use disclosure (draft; confirm against the live 2026 Submission Guide)
 
-- Tool: Claude (Anthropic), used through Claude Code.
-- Code: the game code in `src/`, `test/`, `tools/`, `index.html`, `mission.html`, `style.css`, `md.css` was first drafted by Claude and then run and tested. A human (team) tested and reviewed. Rover Rules was written earlier in the project; Mission Design (`src/md_model.js`, `src/md_ui.js`, `test/md_test.js`) was written by Claude in an autonomous session on 2026-11-15.
-- Data: no AI-generated data. Terrain is real USGS data; slopes were computed by script. Mars facts were looked up through web search and are cited in `src/config.js`. Mission Design numbers are invented game values, labelled as such.
-- Text: README, scenario text, hints, submission drafts were drafted by Claude and need a human read.
-- Images and audio: none generated. Visuals are drawn in code; sounds come from the Web Audio API.
-- No NASA logos, names of NASA brand marks, or mission patches are used or altered.
-- Who is responsible: the team reviews and submits.
+Rules (from `../REQUIREMENTS_2026.md`): AI use must be stated, where and how; AI images and videos need a visible watermark; AI audio, code and data must be acknowledged in the description and metadata; AI content must not use or modify NASA branding.
+
+- Tool: Claude (Anthropic) in Claude Code.
+- Code: all game code (`src/`, `*.html`, `style.css`, `md.css`), tests and scripts (`test/`, `tools/`) were drafted by Claude and then run. Rover Rules was tested by teammates. Mission Design was written and tested by Claude in autonomous sessions and has had no human code review yet.
+- Text: README, scenario and hint texts, model notes, submission and demo drafts were written by Claude.
+- Data: no AI-generated data. Terrain is real USGS data processed by a script. Orbit facts were read from NASA pages and are cited. Other numbers are invented game values, labelled as such.
+- Images: none generated. All visuals are SVG or canvas drawn by code; screenshots are of the game. The demo video is a screen recording of the real game, not AI video.
+- Audio: none in the demo video. Rover Rules makes simple tones with the browser's Web Audio API.
+- No NASA logos, patches or branding are used or altered.
+- The team is responsible for the submission.
