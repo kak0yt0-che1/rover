@@ -10,7 +10,9 @@ By wake time the project must be: (a) playable by a stranger from a public URL, 
 2. `COMPLIANCE.md`, `SELF_JUDGING.md`, `STATUS.md`, `MORNING_REPORT.md`, `DECISIONS.md`, `REFERENCES.md`, `AI_USE.md`.
 3. `SUBMISSION.md` and `DEMO.md`. Their structure follows the 2026 guide; keep the field names and the `[ ... ]` placeholders you cannot fill honestly.
 
-Starting state: Mission Design (mission.html) and Rover Rules both exist on branch `autopilot`. Tests md_test, console_test, balance_test pass. NEVER done: a real click-through of the UI (only headless load + screenshots). Not yet done: public URL, video/slides, verified NASA values for Mission Design, sandbox, share/compare, competitive mode, tutorial. Self-score weakest: Presentation 2/5.
+Starting state (verify each point locally first, the public GitHub copy is OLDER):
+- The public repo `kak0yt0-che1/rover` shows only one commit from 14 Nov ("Rover Rules") on `main`, with the whole app inside a subfolder `rover/`, no Mission Design, none of the docs, no `autopilot` branch. The newer work (Mission Design, rover-fixed fixes, docs, tests) exists only on the local machine. On the public copy the tests fail because they read `data/terrain.json`, which does not exist (the data file is `data/terrain_data.js`).
+- Locally: Mission Design (mission.html) and Rover Rules both exist on branch `autopilot`. Tests md_test, console_test, balance_test pass. NEVER done: a real click-through of the UI (only headless load + screenshots). Not yet done: public URL, video/slides, verified NASA values for Mission Design, sandbox, share/compare, competitive mode, tutorial. Self-score weakest: Presentation 2/5.
 
 ## 2. Rules (non-negotiable)
 Integrity
@@ -28,7 +30,7 @@ Autonomy
 Git
 - Work on a new branch `autopilot2` created from `autopilot`. Small commits with clear messages.
 - Tag a checkpoint after every phase that is green: `ckpt-1`, `ckpt-2`, ... Rollback point if a later step breaks things.
-- Never touch `main`. Never force-push or rewrite history. [PUSH_POLICY: push `autopilot2` after each checkpoint / do not push].
+- Never touch `main`. Never force-push or rewrite history. Push policy (default, allowed): push `autopilot2` to origin after every green checkpoint, so the work exists on GitHub even if this machine dies. Never push to `main`.
 
 Quality gate
 - Before and after every change run the full test suite. A red test stops all new work until it is green again.
@@ -61,6 +63,9 @@ Fix every bug found. Log each one.
 Exit gate: e2e green. Tag `ckpt-1`.
 
 ### Phase 2 (about 45 min): public deployment readiness
+- GitHub Pages serves the ROOT of one branch (or `/docs`). If the app sits in a subfolder (as on the public copy, `rover/`), the site root would 404. Fix it: move the app so `index.html` is in the repo root (`git mv`, then fix script paths, test paths and the README), or add a root `index.html` that links to the app. Pick one, log it, and test it.
+- Third-party AI tooling folders (`.agents/`, `.claude/skills/`, `skills-lock.json`) must not clutter the shipped site: remove them from the repo, or keep them and list them in `REFERENCES.md` with their licence. Do not delete anything you did not create without logging it.
+- The Pages branch: the human will point Pages at `autopilot2` or merge it into `main` (see Reports). Write both options in `DEPLOY.md`.
 - All paths relative so the game works under a repo subpath (`https://<user>.github.io/<repo>/`). Prove it by serving the folder under a prefix locally and re-running the e2e suite.
 - Add `.nojekyll` and a GitHub Pages workflow or documented `/docs` setup. Write `DEPLOY.md` with exact commands and clicks for the human (merge to main, enable Pages, expected URL).
 - `index.html` becomes a clear landing page: Mission Design first (primary button), Rover Rules as bonus. A stranger must understand what to do in 10 seconds.
@@ -70,7 +75,7 @@ Exit gate: works under a subpath, e2e green. Tag `ckpt-2`.
 ### Phase 3 (about 100 min): challenge coverage (highest value first; stop at feature freeze)
 Do these in order. Each must be small, tested and honest.
 1. Guided first-run tutorial and "why" hints (educational value, Influence). Short, skippable, 5 steps max: what the six resources are, why mass limits depend on orbit, what a data rate is. Hints near each choice explain WHY it changes the score. Plain English.
-2. Verified values and a Model notes page (Validity, NASA Data field). Open NASA or agency pages (WebFetch) and record 3 to 5 real values the game actually uses (for example surface gravity, typical orbit altitude, typical small-satellite data rate), each with URL and date opened. Use them in the model where they fit. Add `model.html` that explains the simulation, lists every simplification, and writes the key formulas in proper mathematical notation (MathML or well-formed HTML, not plain-text symbols), for example the rocket equation. If the sites cannot be opened, skip the "NASA data" claim and write that clearly in `SUBMISSION.md`.
+2. Verified values and a Model notes page (Validity, NASA Data field). FIRST resolve what the README itself lists as unverified: every entry in `src/config.js` marked `verified: false` (sol length, signal delay, temperatures, dust loss, tilt limit), the "Did you know?" lines in `src/ui.js` (FACTS), and the real-world notes in `src/missions.js`. For each: open a NASA page, paste the URL and date opened next to the value, or if you cannot confirm it, remove the claim or relabel it as a game value. Then do the same for Mission Design values. Open NASA or agency pages (WebFetch) and record 3 to 5 real values the game actually uses (for example typical orbit altitudes, typical small-satellite data rates, solar irradiance at Earth, only if the game uses them), each with URL and date opened. Use them in the model where they fit. Add `model.html` that explains the simulation, lists every simplification, and writes the key formulas in proper mathematical notation (MathML or well-formed HTML, not plain-text symbols), for example the rocket equation. If the sites cannot be opened, skip the "NASA data" claim and write that clearly in `SUBMISSION.md`.
 3. Share and compare designs (suggested feature). Encode a design in the URL hash; opening the link loads it. A compare view shows two saved designs and their results side by side.
 4. Sandbox mode (suggested feature): constraints optional, all parts unlocked, free experimentation, clearly labelled as unscored.
 5. Competitive hot-seat mode (suggested feature): teams fly the same seed, then a comparison screen ranks them. No backend.
@@ -129,6 +134,6 @@ Anything not in this table needs a clear link to a requirement or criterion, oth
 2. What works, with the command or test that proves each item.
 3. What does not work or is partial. Be blunt.
 4. Self-scores for the five criteria with the evidence.
-5. Human-only steps with exact clicks: (a) merge `autopilot2` into `main` and push, (b) enable GitHub Pages, expected URL, (c) open the live URL and play one run, (d) upload `demo/demo.mp4` (or record with OBS) to YouTube as Public or Unlisted and test the link in a private window, or host `demo/slides.pdf` as the deck, (e) fill every `[ ... ]` in `SUBMISSION.md` (project name, team, members, links, NASA data, AI details), (f) confirm originality and AI statements, (g) press "Submit for Judging" before 11:59 p.m. local time of the Local Event, with a safe target time hours earlier.
+5. Human-only steps with exact clicks: (a) either merge `autopilot2` into `main` (GitHub: open a pull request, merge), or leave it and point Pages at the `autopilot2` branch, (b) enable GitHub Pages (Settings, Pages, branch and root folder), with the expected URL, (c) open the live URL and play one run, (d) upload `demo/demo.mp4` (or record with OBS) to YouTube as Public or Unlisted and test the link in a private window, or host `demo/slides.pdf` as the deck, (e) fill every `[ ... ]` in `SUBMISSION.md` (project name, team, members, links, NASA data, AI details), (f) confirm originality and AI statements, (g) press "Submit for Judging" before 11:59 p.m. local time of the Local Event, with a safe target time hours earlier.
 6. Rollback map: checkpoint tags and what each contains.
 7. Decisions I made that you may want to reverse.

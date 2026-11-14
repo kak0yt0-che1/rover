@@ -76,13 +76,13 @@ You are the engineer, not the driver: design a rover, write IF-THEN rules, send 
 - Elevation: USGS Astrogeology, Mars 2020 Terrain Relative Navigation CTX DTM Mosaic (Jezero crater, 20 m/px).
   https://astrogeology.usgs.gov/search/map/mars_2020_terrain_relative_navigation_ctx_dtm_mosaic
   Re-create the grid: download the GeoTIFF, then `python3 -I tools/prep_terrain.py JEZ_ctx_B_soc_008_DTM_MOLAtopography_DeltaGeoid_20m_Eqc_latTs0_lon0.tif data/` (needs `numpy`, `tifffile`).
-- Slope is computed by us. Terrain types (regolith / sand / rock) are a heuristic from slope and roughness, informed by NASA AI4Mars (not trained on it, not redistributed).
+- Slope is computed by us. Terrain types (regolith / sand / rock) are a heuristic from slope and roughness, our own rule; no NASA terrain-label data is used.
 
-## Sources for the Mars game numbers (checked by teammates; not re-opened in the last session)
+## Sources for the Mars game numbers (each page opened on 2026-11-15)
 - Sol = 24 h 39 m 35 s: Royal Museums Greenwich, "How long is a day on Mars?" https://www.rmg.co.uk/stories/space-astronomy/how-long-day-on-mars (not a NASA page)
 - Signal delay up to about 22 min: NASA NTRS, "Communication Delays, Disruptions, and Blackouts for Crewed Mars Missions" (ASCEND 2022). The game does not simulate the delay.
 - Jezero air temperature about -83 to -23 C: NASA Science, "Daily records of atmospheric temperature with Perseverance" https://science.nasa.gov/blogs/daily-records-of-atmospheric-temperature-with-perseverance/ (the game's -73 to -7 C is a game value)
-- 2018 dust storm (sunlight blocked about four months, opacity peak 10.8 vs 0.5 average): NASA JPL, "Mars rover mission comes to an end but science legacy live on" https://jpl.nasa.gov/edu/news/2019/2/13/mars-rover-mission-comes-to-an-end-but-science-legacy-live-on
+- 2018 dust storm (sunlight blocked about four months, opacity peak 10.8 vs 0.5 average): NASA JPL, "Mars rover mission comes to an end but science legacy live on" https://www.jpl.nasa.gov/edu/resources/teachable-moment/mars-rover-mission-comes-to-an-end-but-science-legacy-live-on/ (opened 2026-11-15)ve-on
 - Perseverance tilt (designed for 45 deg, drivers avoid more than 30 deg) and Curiosity wheel wear: NASA Science, rover components https://science.nasa.gov/mission/mars-2020-perseverance/rover-components/
 - Opportunity stuck in a dune in 2005 (more than five weeks to escape): NASA JPL PIA07999 https://www.jpl.nasa.gov/images/pia07999-looking-back-at-purgatory-dune
 - Terrain: USGS Mars 2020 TRN CTX DTM Mosaic, built from Context Camera images from NASA's Mars Reconnaissance Orbiter; CC0. https://www.usgs.gov/data/mars-2020-terrain-relative-navigation-ctx-dtm-mosaic

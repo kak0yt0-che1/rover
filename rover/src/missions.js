@@ -57,7 +57,7 @@
     seed: 4404, planWeight: 2, tipSlope: 26, eventCount: 3, startTod: 0.6,
     eventPool: ["cold_snap", "cold_snap", "rock_strike", "dust_gust"],
     dust: () => 0.05,
-    real: "Mars nights are far colder than Earth's. Real rovers use heaters and radioisotope warmth to keep their electronics alive.",
+    real: "Mars nights are far colder than Earth's. Perseverance's power system also supplies the heat that keeps its tools and systems at their correct operating temperatures (NASA Science, rover components page).",
   };
   MR.MISSION_LIST = [MR.MISSIONS.storm, MR.MISSIONS.climb, MR.MISSIONS.sand, MR.MISSIONS.night];
 })();

@@ -16,4 +16,9 @@ Note on layout: the git repository root is the folder that CONTAINS `rover/` (th
 4. Expected URL: `https://<user>.github.io/<repo>/` (landing page), `.../mission.html` (Mission Design), `.../rover.html` (Rover Rules).
 5. Open the URL in a private window and play one run. Paste the URL into the "Link to Final Project" field of the submission.
 
+## Three ways to publish (pick one)
+- **A. GitHub Actions (recommended):** merge `autopilot2` into `main` (open a pull request on GitHub and merge it), then Settings > Pages > Source: "GitHub Actions". The workflow publishes the `rover/` folder as the site root.
+- **B. Branch, root folder:** Settings > Pages > Source: "Deploy from a branch", branch `main` (after merging) or `autopilot2`, folder `/ (root)`. The root `index.html` redirects to `rover/`, so the URL stays `https://<user>.github.io/<repo>/`.
+- **C. Without merging:** same as B but choose branch `autopilot2`.
+
 Fallback without Actions: copy the contents of `rover/` into the repo root (or a `/docs` folder) and choose "Deploy from a branch" in Settings > Pages.

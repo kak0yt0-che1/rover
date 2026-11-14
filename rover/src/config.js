@@ -42,14 +42,14 @@
   // verified:true  = we opened the cited page and the number matches.
   // kind:"game"    = a game-balance value; the note says what the real world looks like for comparison.
   const SOURCES = {
-    SOL_HOURS: { verified: true, note: "24 h 39 m 35 s. Royal Museums Greenwich, 'How long is a day on Mars?' (not a NASA page)." },
-    SIGNAL_DELAY_MAX_MIN: { verified: true, note: "Up to about 22 minutes one-way. NASA NTRS paper 'Communication Delays, Disruptions, and Blackouts for Crewed Mars Missions' (ASCEND 2022). The delay is described in text only; the game does not simulate it." },
-    AMBIENT_MIN_C: { kind: "game", note: "Real: NASA reports Jezero air temperature of about -83 to -23 C over a typical day (NASA Science, 'Daily records of atmospheric temperature with Perseverance'). The game uses -73, a bit warmer than reality." },
+    SOL_HOURS: { verified: true, note: "24 h 39 m 35 s. Royal Museums Greenwich, 'How long is a day on Mars?' https://www.rmg.co.uk/stories/space-astronomy/how-long-day-on-mars (not a NASA page; opened 2026-11-15). NASA's Mars Fact Sheet lists 24.6597 h (hours), consistent." },
+    SIGNAL_DELAY_MAX_MIN: { verified: true, note: "Up to about 22 minutes one-way. NASA NTRS 20220013418, 'Communication Delays, Disruptions, and Blackouts for Crewed Mars Missions' (ASCEND 2022): delays vary from 0 to 22 minutes, https://ntrs.nasa.gov/citations/20220013418 (opened 2026-11-15). The delay is described in text only; the game does not simulate it." },
+    AMBIENT_MIN_C: { kind: "game", note: "Real: NASA reports Jezero air temperature of about -83 to -23 C over a typical day (NASA Science, 'Daily records of atmospheric temperature with Perseverance', https://science.nasa.gov/blogs/daily-records-of-atmospheric-temperature-with-perseverance/, opened 2026-11-15). The game uses -73, a bit warmer than reality." },
     AMBIENT_MAX_C: { kind: "game", note: "The game uses -7. See above: real air temperature peaks nearer -23 C." },
-    DUST_SOLAR_LOSS: { kind: "game", note: "The game loses up to 90% of sunlight at full dust. Real: the 2018 global dust storm blocked Opportunity's sunlight for about four months; opacity peaked at 10.8 against an average of 0.5 (NASA JPL, Feb 2019)." },
-    TIP_SLOPE_DEG: { kind: "game", note: "The game tips rovers from 26 deg. Real: Perseverance is designed to withstand a 45 deg tilt, and drivers avoid terrain that would tilt it more than 30 deg (NASA Science, rover components page)." },
+    DUST_SOLAR_LOSS: { kind: "game", note: "The game loses up to 90% of sunlight at full dust. Real: the 2018 global dust storm blocked Opportunity's sunlight for about four months; opacity peaked at 10.8 against an average of 0.5 (NASA JPL, 'Mars rover mission comes to an end', https://www.jpl.nasa.gov/edu/resources/teachable-moment/mars-rover-mission-comes-to-an-end-but-science-legacy-live-on/, opened 2026-11-15)." },
+    TIP_SLOPE_DEG: { kind: "game", note: "The game tips rovers from 26 deg. Real: Perseverance is designed to withstand a 45 deg tilt, and drivers avoid terrain that would tilt it more than 30 deg (NASA Science, rover components page, https://science.nasa.gov/mission/mars-2020-perseverance/rover-components/, opened 2026-11-15)." },
     TERRAIN: { verified: true, note: "USGS Astrogeology, Mars 2020 TRN CTX DTM Mosaic (Jezero), 20 m/px. Slope computed by us: each 320 m cell uses the steepest 10% of its 20 m slopes, not an average." },
-    TERRAIN_TYPES: { verified: true, note: "Heuristic from slope + roughness, informed by (not trained on) NASA AI4Mars classes. Say this in the write-up." },
+    TERRAIN_TYPES: { verified: true, note: "Our own heuristic from slope and roughness. It does not use or copy any NASA terrain-label data." },
     ALL_OTHER: { kind: "game", note: "Power, wear and probability numbers are game-balance values, not NASA numbers." },
   };
 

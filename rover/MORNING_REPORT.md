@@ -59,4 +59,9 @@ Not fixed, your call:
 - Solo play gets full teamwork points, so solo scores sit at 94 to 98 with little spread; the first run on Normal is easy (starter default plus the imager wins).
 - Two-player mode still shows four role tabs and gives no hint on merging roles.
 - "Add to leaderboard" shows no confirmation near the button; saved state persists across reloads (by design).
-- The reviewer did not play Rover Rules and did not rerun the tests; my e2e suite does play one Rover run. Its Night Crossing note and the AI4Mars wording stay unverified (see HUMAN_TODO.md).
+- The reviewer did not play Rover Rules and did not rerun the tests; my e2e suite does play one Rover run.
+
+## 9. Update after the plan was amended (second pass)
+- Mars-game facts: each claim in `src/config.js`, the "Did you know?" lines and `src/missions.js` was checked on a page opened on 2026-11-15 (NASA rover components, NASA/JPL Purgatory Dune, NASA Science temperature blog, JPL dust-storm article, NASA NTRS 20220013418, Royal Museums Greenwich for the sol). The Night Crossing note was reworded (the NASA page does not mention heaters) and the AI4Mars claim removed (the code never used it). Still game values, unconfirmed by design: power, wear and probability numbers, and the game's -73/-7 C and 90% dust loss (the real values are cited next to them).
+- Pages layout: a root `index.html` redirect (repo root) plus the Actions workflow; three ways to publish are in DEPLOY.md. The redirect was tested under a sub-path.
+- Push: `autopilot2` pushed to origin (the plan allows it); `main` untouched. The public copy of `main` still shows the old project, so Pages must point at `autopilot2` or you merge it (step 5a).

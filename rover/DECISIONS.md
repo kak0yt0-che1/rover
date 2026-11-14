@@ -6,3 +6,8 @@
 - 2026-11-15: Imported the team's `rover-fixed.zip` over the project: it had better-sourced numbers, a `tune.js` fix and a working test loader. Kept my later README note about verification state out; theirs replaced it.
 - 2026-11-15: Mission Design numbers are game values (labelled as such), not data for real vehicles. Launchers are generic classes. Why: no verified source for real figures, rule is to never invent sources.
 - 2026-11-15: Score uses fixed weights (30/20/20/15/15) and is tied to the brief: performance, science, efficient resource use, decision quality, teamwork.
+- 2026-11-15 (second session): Pages layout. The git repo root holds the game in the `rover/` subfolder (as on the public copy). Chose to keep the folder and add (a) a root `index.html` that redirects to `rover/` so "Deploy from a branch, root" works, and (b) a GitHub Actions workflow that publishes `rover/` directly. Why: no file moves, so test paths and history stay intact. Both are documented in DEPLOY.md.
+- 2026-11-15: Third-party AI tooling folders `.agents/`, `.claude/`, `skills-lock.json` (the installed frontend-design skill) were removed from git tracking (`git rm --cached`) and ignored. The files still exist on the local disk; nothing was deleted. Why: they are not part of the game and would clutter the shipped site.
+- 2026-11-15: Removed the claim that terrain types are "informed by NASA AI4Mars": the code does not use that data. Reworded the Night Crossing note (the NASA page does not mention heaters).
+- 2026-11-15: Hard difficulty made easier (budget x0.87, deadline x0.93) so one strategy wins at least half the time (see docs/BALANCE.md).
+- 2026-11-15: Pushing `autopilot2` to origin is allowed by the updated plan; `main` is never touched.

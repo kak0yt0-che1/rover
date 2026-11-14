@@ -30,7 +30,7 @@
     "Radio signals can take up to about 22 minutes to cross the gap between Earth and Mars, so rovers have to drive themselves.",
     "The 2018 global dust storm blocked Opportunity's sunlight for about four months. The rover never answered again after June 2018.",
     "Curiosity's wheels wore down on sharp rocks, so Perseverance got narrower, larger and thicker aluminium wheels.",
-    "Air temperature in Jezero crater can drop to about -83 °C. Real rovers need heat to keep their electronics alive.",
+    "Air temperature in Jezero crater can drop to about -83 °C. Real rovers keep their electronics at working temperature with heat from their power system.",
     "In 2005 Opportunity needed more than five weeks of planning and careful driving to escape a sand dune.",
   ];
   const noteCount = (tr, re) => tr.reduce((n, st) => n + st.notes.filter((x) => re.test(x)).length, 0);
