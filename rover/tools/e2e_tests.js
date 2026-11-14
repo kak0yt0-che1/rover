@@ -281,4 +281,15 @@ module.exports = async function (H) {
     expect((await page.locator("text=You changed the radio: S-band radio to X-band radio").count()) === 1, "delta should name the radio change");
     await page.ctx.close();
   });
+  // 16. demo mode: runs the real game to the end, deterministic, invisible without the flag
+  await test("demo mode runs to the end on the real game", async (problems) => {
+    const page = await newPage({ width: 1280, height: 720 }, problems);
+    await page.goto(H.getBase() + "mission.html?demo=1&speed=0.2&team=Test+Team");
+    await page.waitForSelector('body[data-demo="done"]', { timeout: 20000 });
+    expect((await page.locator(".demo-card").count()) === 1, "end card expected");
+    const plain = await newPage({ width: 1280, height: 720 }, problems);
+    await plain.goto(H.getBase() + "mission.html");
+    expect((await plain.locator(".demo-cap, .demo-card").count()) === 0, "demo UI must not show in normal play");
+    await page.ctx.close(); await plain.ctx.close();
+  });
 };

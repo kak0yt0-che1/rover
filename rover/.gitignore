@@ -3,3 +3,4 @@ node_modules/
 skills-lock.json
 *.webm
 .claude/
+!demo/demo.webm

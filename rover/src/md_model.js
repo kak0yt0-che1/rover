@@ -61,7 +61,7 @@
   MD.DIFFICULTY = {
     easy: { name: "Easy", budget: 1.25, weeks: 1.2, events: 0.5 },
     normal: { name: "Normal", budget: 1, weeks: 1, events: 1 },
-    hard: { name: "Hard", budget: 0.8, weeks: 0.85, events: 1.6 },
+    hard: { name: "Hard", budget: 0.87, weeks: 0.93, events: 1.6 },
   };
 
   // ---------- scenarios ----------

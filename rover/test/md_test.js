@@ -69,5 +69,7 @@ ok(MD.simulate(bad, 1, { sandbox: true }).reasons[0].startsWith("Sandbox run"), 
   ok(MD.delta({ design: a, score: ra.score, outcome: ra.outcome }, { design: a, score: ra.score, outcome: ra.outcome }).sameDesign, "same design is flagged"); }
 // 12. ranking: higher score first, cheaper wins a tie
 { const r = MD.rank([{ n: "A", score: { total: 80 }, cost: 9 }, { n: "B", score: { total: 90 }, cost: 12 }, { n: "C", score: { total: 80 }, cost: 7 }]); ok(r.map((x) => x.n).join("") === "BCA", "ranking order"); }
+// 13. the demo mode seed (7, launch adds 1) shows events and a success on the real model
+{ const dd = D("coast", { launcher: "small", orbit: "sso", bus: "u6", solar: "wings", battery: "m", comms: "sband", payloads: ["multi", "camera"], ground: "single" }); const o = MD.simulate(dd, 8); ok(o.outcome === "success" && o.events.length >= 2, "demo seed 8 gives a success with events: " + o.outcome + " " + o.events.length); }
 console.log(report.join("\n"));
 console.log(`md_test: ${n} checks passed`);
