@@ -1,5 +1,5 @@
 // All game numbers live here, each with a source note.
-// verified:false = still needs a human to check it against a NASA source (do NOT trust AI-recalled numbers).
+// Every entry in SOURCES says whether it was checked against a cited page or is a game value.
 (function () {
   const MR = (globalThis.MR = globalThis.MR || {});
 
@@ -36,19 +36,21 @@
     // budget
     BUDGET_MASS: 78,
     BUDGET_COST: 115,
-    SIGNAL_DELAY_MIN: [3, 22],    // one-way Earth-Mars, minutes (display only)
+    SIGNAL_DELAY_MAX_MIN: 22,     // one-way Earth-Mars, longest delay in minutes (shown in text only, NOT simulated)
   };
 
+  // verified:true  = we opened the cited page and the number matches.
+  // kind:"game"    = a game-balance value; the note says what the real world looks like for comparison.
   const SOURCES = {
-    SOL_HOURS: { verified: false, note: "Mars mean solar day = 24 h 39 m 35 s. Check against NASA Mars fact sheet." },
-    SIGNAL_DELAY_MIN: { verified: false, note: "One-way light time Earth-Mars, roughly 3-22 min. Check NASA/JPL." },
-    AMBIENT_MIN_C: { verified: false, note: "Jezero diurnal air temperature range. Check Perseverance MEDA data (NASA PDS)." },
-    AMBIENT_MAX_C: { verified: false, note: "Same as above." },
-    DUST_SOLAR_LOSS: { verified: false, note: "Global dust storms cut solar power by a large fraction (Opportunity 2018). Check NASA release." },
-    TIP_SLOPE_DEG: { verified: false, note: "Game value. Real rovers have tilt limits; look up the Perseverance/Curiosity limit." },
-    TERRAIN: { verified: true, note: "USGS Astrogeology, Mars 2020 TRN CTX DTM Mosaic (Jezero), 20 m/px. Slope computed by us." },
+    SOL_HOURS: { verified: true, note: "24 h 39 m 35 s. Royal Museums Greenwich, 'How long is a day on Mars?' (not a NASA page)." },
+    SIGNAL_DELAY_MAX_MIN: { verified: true, note: "Up to about 22 minutes one-way. NASA NTRS paper 'Communication Delays, Disruptions, and Blackouts for Crewed Mars Missions' (ASCEND 2022). The delay is described in text only; the game does not simulate it." },
+    AMBIENT_MIN_C: { kind: "game", note: "Real: NASA reports Jezero air temperature of about -83 to -23 C over a typical day (NASA Science, 'Daily records of atmospheric temperature with Perseverance'). The game uses -73, a bit warmer than reality." },
+    AMBIENT_MAX_C: { kind: "game", note: "The game uses -7. See above: real air temperature peaks nearer -23 C." },
+    DUST_SOLAR_LOSS: { kind: "game", note: "The game loses up to 90% of sunlight at full dust. Real: the 2018 global dust storm blocked Opportunity's sunlight for about four months; opacity peaked at 10.8 against an average of 0.5 (NASA JPL, Feb 2019)." },
+    TIP_SLOPE_DEG: { kind: "game", note: "The game tips rovers from 26 deg. Real: Perseverance is designed to withstand a 45 deg tilt, and drivers avoid terrain that would tilt it more than 30 deg (NASA Science, rover components page)." },
+    TERRAIN: { verified: true, note: "USGS Astrogeology, Mars 2020 TRN CTX DTM Mosaic (Jezero), 20 m/px. Slope computed by us: each 320 m cell uses the steepest 10% of its 20 m slopes, not an average." },
     TERRAIN_TYPES: { verified: true, note: "Heuristic from slope + roughness, informed by (not trained on) NASA AI4Mars classes. Say this in the write-up." },
-    ALL_OTHER: { verified: false, note: "Power, wear and probability numbers are game-balance values, not NASA numbers." },
+    ALL_OTHER: { kind: "game", note: "Power, wear and probability numbers are game-balance values, not NASA numbers." },
   };
 
   MR.CONFIG = CONFIG;

@@ -32,7 +32,10 @@
       const range = sd.max - sd.min;
       let v = term.value + (rng() - 0.5) * range * 0.4;
       v = Math.round(v / sd.step) * sd.step;
-      term.value = Math.min(sd.max, Math.max(sd.min, v));
+      v = Math.min(sd.max, Math.max(sd.min, v));
+      // never accept a threshold that makes the rule impossible (e.g. battery < 0), which would just disable it
+      if ((term.op === "<" && v <= sd.min) || (term.op === ">" && v >= sd.max)) continue;
+      term.value = v;
       const sc = meanScore(design, cand, mission, seeds, opts.elseAction);
       if (sc.score > cur.score) { best = cand; cur = sc; }
     }
