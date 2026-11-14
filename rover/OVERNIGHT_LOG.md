@@ -5,3 +5,4 @@
 02:09 | 3.3-3.6 | share link, compare, sandbox, competition, delta; md_test 94 checks, e2e 31/31 (also under subpath) | green | a611d5b
 02:14 | 4-5 | md_balance (all targets met, docs/BALANCE.md), demo mode ?demo=1 (26.6 s webm 1080p via playwright ffmpeg), 14 screenshots, slides.pdf 7 pages; npm test green, e2e 32/32 | green | 586c7b6
 02:22 | 6 | docs updated, links checked, npm test + e2e 32/32 (also under subpath) | green | 88335fd
+02:30 | 7 | reviewer agent run, 5 findings fixed, npm test + e2e 32/32 green | tag final | dddb4c2
