@@ -157,7 +157,7 @@
       h("div", { class: "row" }, h("span", {}, h("b", {}, label), crit(key), h("span", { class: "stat" + (over ? " bad" : "") }, over ? "over the limit" : used / (cap || 1) > 0.9 ? "tight" : "ok")), h("span", {}, text)),
       h("div", { class: "bar " + (over ? "bad" : used / (cap || 1) > 0.9 ? "warn" : "") }, h("i", { style: `width:${clampPct((used / (cap || 1)) * 100)}%` })),
       h("p", { class: "why" }, WHY[key]));
-    return h("aside", { class: "dash card hangar" }, craftSVG(G.design, A), h("div", { class: "hudcol" }, h("h3", {}, "Mission dashboard"), h("div", { class: "hint" }, h("b", {}, sc.title + ": "), sc.objective, " ", sc.hint), h("div", { class: "hudgrid" },
+    return h("aside", { class: "dash side", tabindex: "0", "aria-label": "Your spacecraft and the six limits" }, craftSVG(G.design, A), h("div", { class: "hudcol card" }, h("h3", {}, "Mission dashboard"), h("div", { class: "hudgrid" },
       res("mass", "Mass", A.mass.used, A.mass.cap || 1, A.mass.cap ? `${num(A.mass.used)} / ${A.mass.cap} kg` : `${num(A.mass.used)} kg, this rocket cannot reach this orbit`, A.mass.used > A.mass.cap),
       res("power", "Power", A.power.load, Math.max(A.power.gen, 0.1), `use ${num(A.power.load)} W / make ${num(A.power.gen)} W`, A.power.gen < A.power.load),
       res("budget", "Budget", A.budget.used, A.budget.cap, `${num(A.budget.used)} / ${num(A.budget.cap)} M`, A.budget.used > A.budget.cap),
@@ -181,7 +181,7 @@
     const d = G.design, sc = MD.SCENARIOS[d.scenario], A = MD.analyse(d), roles = Object.keys(MD.ROLES);
     const owned = G.role === "all" ? ["launcher", "orbit", "ground", "bus", "solar", "battery", "prop", "payloads", "comms"] : roleKeys(G.role);
     const banner = G.mode === "sandbox" ? "Sandbox: limits only warn here and nothing is scored." : G.mode === "comp" && G.comp ? `${G.compNames[G.comp.idx]} is designing (team ${G.comp.idx + 1} of ${G.compN}). Same mission and same random events for every team. One launch per team.` : "";
-    const panel = [banner ? h("div", { class: "msg", role: "status" }, banner) : null, G.note ? h("div", { class: "msg", role: "status" }, G.note) : null, tourCard()];
+    const panel = [banner ? h("div", { class: "msg", role: "status" }, banner) : null, G.note ? h("div", { class: "msg", role: "status" }, G.note) : null, tourCard(), h("div", { class: "hint" }, h("b", {}, sc.title + ": "), sc.objective, " ", sc.hint)];
     if (G.players > 1) {
       panel.push(h("div", { class: "roles", role: "tablist" }, roles.map((r) => h("button", { role: "tab", "aria-selected": G.role === r, class: G.approved.has(r) ? "ok" : "", onclick: () => { G.role = r; render(); } }, `${MD.ROLES[r].name}`))));
       const r = MD.ROLES[G.role];
@@ -196,8 +196,7 @@
     return h("div", {},
       h("div", { class: "steps" }, h("span", {}, "1 Mission"), h("span", { class: "on", "aria-current": "step" }, "2 Design"), h("span", {}, "3 Launch and results")),
       h("h1", {}, "Design your spacecraft"),
-      dashboard(A, sc),
-      h("div", { class: "panel-col" }, panel),
+      h("div", { class: "build-grid" }, dashboard(A, sc), h("div", { class: "panel-col" }, panel)),
       h("div", { class: "row-actions" },
         h("button", { class: "btn", onclick: () => setPhase("setup") }, "Back to missions"),
         h("button", { class: "btn", onclick: () => saveDesign(A) }, "Save this design"),

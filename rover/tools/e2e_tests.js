@@ -338,4 +338,19 @@ module.exports = async function (H) {
     await page.reload(); expect((await page.locator("#sndBtn").innerText()) === "Sound: on", "remembered");
     await page.ctx.close();
   });
+  // 20. the spacecraft stays in view while scrolling through the parts (desktop side column, phone sticky top)
+  for (const [w, h] of [[1366, 768], [390, 844]]) await test(`spacecraft stays visible while scrolling at ${w}x${h}`, async (problems) => {
+    const page = await newPage({ width: w, height: h }, problems);
+    await startScenario(page, "coast", "Normal");
+    const inView = async () => page.evaluate(() => { const r = document.querySelector("figure.stage svg.craft").getBoundingClientRect(); return r.bottom > 40 && r.top < window.innerHeight - 40 && r.height > 60; });
+    expect(await inView(), "craft not visible before scrolling");
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await page.waitForTimeout(250);
+    expect(await inView(), "craft scrolled out of view at the bottom of the parts list");
+    await pick(page, "X-band radio").click();
+    await page.waitForTimeout(250);
+    expect((await page.locator("ul.legend li", { hasText: "X-band radio" }).count()) === 1 || w < 900, "legend should show the new part");
+    expect(await inView(), "craft not visible after changing a part");
+    await page.ctx.close();
+  });
 };
