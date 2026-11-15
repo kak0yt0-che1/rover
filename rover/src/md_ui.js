@@ -256,43 +256,40 @@
   }
   const reduced = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const soundFor = (r) => MR.sfx(r.outcome === "success" ? "win" : r.outcome === "partial" ? "star" : "lose");
-  function clearFlight() { (G.ft || []).forEach(clearTimeout); if (G.fi) clearInterval(G.fi); G.ft = []; G.fi = null; }
+  function clearFlight() { (G.ft || []).forEach((f) => { if (typeof f === "function") f(); else clearTimeout(f); }); if (G.fi) clearInterval(G.fi); G.ft = []; G.fi = null; }
   function finishFlight() { clearFlight(); setPhase("result"); soundFor(G.result); }
   function flight() {
     const gauge = (id, label) => h("div", { class: "fl-g" }, h("span", {}, label), h("div", { class: "bar" }, h("i", { id: id + "Bar", style: "width:0%" })), h("b", { id }, "0"));
-    const scene = h("div", { id: "liftoff", class: "fl-scene" }); scene.innerHTML = MR.mdArt.liftoff(G.design.launcher);
+    const scene = h("div", { id: "liftoff", class: "fl-scene" });
     return h("div", { class: "flight" },
       h("div", { class: "steps" }, h("span", {}, "1 Mission"), h("span", {}, "2 Design"), h("span", { class: "on", "aria-current": "step" }, "3 Launch and results")),
       h("h1", {}, "Launch"),
       h("div", { class: "fl-grid" }, scene,
         h("div", { class: "fl-hud" }, h("div", { id: "flCount", class: "fl-count", "aria-live": "polite" }, "T-3"),
+          h("div", { id: "flCraft", class: "fl-craft", "aria-hidden": "true" }),
           gauge("flDay", "Mission day"), gauge("flBat", "Battery"), gauge("flSci", "Science vs target"), gauge("flSto", "Onboard storage"),
           h("ul", { id: "flLog", class: "fl-log", "aria-live": "polite" }),
           h("button", { class: "btn", onclick: finishFlight }, "Skip to report"))));
   }
   function runFlight() {
     const Rz = G.result, sc = MD.SCENARIOS[G.design.scenario], bus = MD.BUSES[G.design.bus], $ = (id) => document.getElementById(id);
-    const say = (t) => { const e = $("flCount"); if (e) e.textContent = t; };
-    const log = (t) => { const ul = $("flLog"); if (ul) ul.prepend(h("li", {}, t)); };
-    const T = (ms, fn) => G.ft.push(setTimeout(fn, ms));
     const setG = (id, text, pct) => { const e = $(id), b = $(id + "Bar"); if (e) e.textContent = text; if (b) b.style.width = Math.max(0, Math.min(100, pct)) + "%"; };
-    T(0, () => { say("T-3"); MR.sfx("count"); }); T(500, () => { say("T-2"); MR.sfx("count"); }); T(1000, () => { say("T-1"); MR.sfx("count"); });
-    T(1500, () => { say("LIFTOFF"); const sv = $("liftoff") && $("liftoff").firstChild; if (sv) sv.classList.add("go"); MR.sfx("launch"); });
-    if (Rz.cause === "launch") { T(2700, () => { say("LAUNCH FAILURE"); log(Rz.reasons[0]); MR.sfx("lose"); }); T(4300, finishFlight); return; }
-    T(2500, () => {
-      const sceneEl = $("liftoff"); if (sceneEl) { sceneEl.classList.add("orbit"); sceneEl.innerHTML = MR.mdArt.craft(G.design); }
-      let i = 0;
-      G.fi = setInterval(() => {
-        const x = Rz.days[i];
-        if (!x) { clearInterval(G.fi); G.fi = null; say(Rz.outcome === "lost" ? "SIGNAL LOST" : "MISSION END"); T(600, finishFlight); return; }
-        say("DAY " + x.day);
+    const host = $("liftoff"); if (!host) return;
+    const anim = MR.mdFlight.play(host, G.design, Rz, {
+      say: (t) => { const e = $("flCount"); if (e) e.textContent = t; },
+      log: (t) => { const ul = $("flLog"); if (ul) ul.prepend(h("li", {}, t)); },
+      sfx: (n) => MR.sfx(n),
+      stage: (n) => { if (n === "orbit") { const c = $("flCraft"); if (c) { c.innerHTML = MR.mdArt.craft(G.design); c.classList.add("on"); } } },
+      day: (x, evs) => {
         setG("flDay", x.day + " / " + sc.days, (x.day / sc.days) * 100); setG("flBat", x.batPct + "%", x.batPct);
         setG("flSci", Math.round(x.science) + " / " + sc.target, (x.science / sc.target) * 100); setG("flSto", x.storage.toFixed(1) + " GB", (x.storage / bus.storage) * 100);
-        const sEl = $("liftoff"); if (sEl) { sEl.classList.toggle("flare", !!x.flare); sEl.classList.toggle("outage", !!x.outage || !!x.glitch); }
-        Rz.events.filter((e) => e.day === x.day).forEach((e) => { log("Day " + e.day + ": " + e.title + ". " + e.text); MR.sfx("event"); });
-        i++;
-      }, 70);
+        const c = $("flCraft"); if (c) { c.classList.toggle("flare", !!x.flare); c.classList.toggle("outage", !!x.outage || !!x.glitch); }
+        const e = $("flCount"); if (e) e.textContent = "DAY " + x.day;
+        (evs || []).forEach((ev) => { const ul = $("flLog"); if (ul) ul.prepend(h("li", {}, "Day " + ev.day + ": " + ev.title + ". " + ev.text)); MR.sfx("event"); });
+      },
+      done: () => finishFlight(),
     });
+    G.ft = [() => anim.stop()];
   }
   function nextTeam() {
     const df = G.design.difficulty, sc = G.design.scenario;

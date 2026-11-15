@@ -5,6 +5,9 @@ A browser game for 1 to 4 players, made for the NASA Space Apps Challenge 2026, 
 
 **Play:** `[PUBLIC URL: fill in after deploying, see DEPLOY.md]`, or open `index.html` from this folder in a browser (no install, no server, no build step).
 
+## Animated missions
+Pressing Launch plays the mission in one scene (`src/md_flight.js`, SVG drawn in code, no assets): countdown, ascent (Max-Q, booster and stage separation, fairing jettison, spacecraft release), for the Moon mission a trans-lunar transit and an orbit burn, then wing deployment and the 30 days in orbit. In orbit you see the Sun, the day and night side, eclipse, the instrument beam or field, ground-station downlink and the random events, all taken from the real simulation result. The T+ clock and stage timings are illustrative, not data about a real rocket. Reduced-motion users skip straight to the report; "Skip to report" is always there.
+
 ## What it is
 Pick a mission, design a small spacecraft (bus, solar panels, battery, radio, instruments, propulsion), choose a rocket and an orbit, then fly a 30-day mission with random events. The dashboard shows the six limits live: **mass, power, budget, data, communications, time**. A report says why it worked or failed. Redesign and fly again.
 

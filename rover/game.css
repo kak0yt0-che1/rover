@@ -68,7 +68,7 @@ main { padding-top: var(--s2); }
 @keyframes ready { 0%, 100% { box-shadow: 0 0 0 0 #e0703f66; } 50% { box-shadow: 0 0 0 8px #e0703f00, 0 0 22px #e0703f66; } }
 
 /* flight screen */
-.fl-grid { display: grid; grid-template-columns: minmax(240px, 340px) minmax(0, 1fr); gap: var(--s3); align-items: start; }
+.fl-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); gap: var(--s3); align-items: start; }
 @media (max-width: 760px) { .fl-grid { grid-template-columns: 1fr; } }
 .fl-scene svg { width: 100%; height: auto; border: 1px solid #262930; border-radius: var(--r); display: block; }
 .fl-count { font: 700 clamp(40px, 8vw, 84px) var(--mono); letter-spacing: .06em; color: var(--accent-hi); margin-bottom: var(--s2); text-shadow: 0 0 24px #e0703f55; }
@@ -120,7 +120,7 @@ svg.liftoff.go .streak { animation: streak .45s linear infinite; }
 .fl-scene.orbit svg { aspect-ratio: 480 / 320; }
 .fl-scene.flare svg { outline: 3px solid var(--accent-hi); box-shadow: 0 0 36px #e0703f66; }
 .fl-scene.outage svg { outline: 3px dashed var(--dim); }
-.fl-grid:has(.fl-scene.orbit) { grid-template-columns: minmax(300px, 480px) minmax(0, 1fr); }
+
 .badgebox { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:8px; margin-top:var(--s1); } .badgebox .badge-new { margin-top:0; }
 
 /* build screen: the spacecraft stays in view while you scroll through the parts */
@@ -182,3 +182,11 @@ svg.liftoff.go .streak { animation: streak .45s linear infinite; }
 .shiplog li { font: 12px var(--mono); color: var(--dim); border-left: 3px solid var(--accent); background: #101114; padding: 4px 8px; }
 .shiplog li:first-child { color: var(--text); animation: enter 200ms ease-out both; }
 @media (max-width: 900px) { .shiplog { display: none; } }
+
+.fl-scene svg { aspect-ratio: 640 / 420; background: #05060a; }
+.fl-craft { display: none; margin-bottom: var(--s1); }
+.fl-craft.on { display: block; }
+.fl-craft svg { width: 100%; max-width: 300px; height: auto; border: 1px solid #262930; border-radius: var(--r); display: block; }
+.fl-craft.flare svg { outline: 3px solid var(--accent-hi); box-shadow: 0 0 28px #e0703f66; }
+.fl-craft.outage svg { outline: 3px dashed var(--dim); }
+.fl-count { font-size: clamp(28px, 5vw, 56px); margin-bottom: var(--s1); }

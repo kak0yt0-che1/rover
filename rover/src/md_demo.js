@@ -45,7 +45,7 @@
     caption("Fix the design, add an instrument"); await wait(1800); unring();
     // 4. launch with an event (seed fixed: the demo seed is 7 and launch adds 1)
     click("Launch mission"); await wait(300); unring();
-    caption("Countdown, liftoff, then 30 days with random events"); await until(() => document.querySelector(".big-total"), 14000); await wait(300);
+    caption("Countdown, liftoff, then 30 days with random events"); await until(() => document.querySelector(".big-total"), 45000); await wait(300);
     // 5. report with why
     const why = [...document.querySelectorAll("h3")].find((h) => /Why it went this way/.test(h.textContent)); if (why) why.scrollIntoView({ block: "center" });
     caption("Stars, a score and the reasons why: then redesign"); await wait(2400);

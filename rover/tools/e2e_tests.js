@@ -300,13 +300,13 @@ module.exports = async function (H) {
     await btn(page, "Launch mission").click();
     await page.locator(".fl-count", { hasText: "T-3" }).waitFor({ timeout: 2000 });
     await page.locator(".fl-count", { hasText: "LIFTOFF" }).waitFor({ timeout: 3000 });
-    await page.locator('.fl-scene.orbit svg.craft').waitFor({ timeout: 4000 });
+    await page.locator('.fl-craft.on svg.craft').waitFor({ timeout: 14000 });
     await page.locator("#flLog").waitFor();
     await btn(page, "Skip to report").click();
     await page.locator(".big-total").waitFor({ timeout: 3000 });
     // second flight runs to its natural end
     await btn(page, "Fly again (new surprises)").click();
-    await page.locator(".big-total").waitFor({ timeout: 14000 });
+    await page.locator(".big-total").waitFor({ timeout: 40000 });
     await page.ctx.close();
   });
 
