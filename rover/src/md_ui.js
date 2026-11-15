@@ -15,7 +15,7 @@
     return el;
   };
 
-  const G = { mode: "mission", compN: 2, compNames: ["Team 1", "Team 2", "Team 3", "Team 4"], comp: null, delta: null, shareUrl: "", note: "", cmpSel: new Set(), phase: "setup", players: 1, role: "all", approved: new Set(), result: null, design: MD.defaultDesign("coast"), team: "Team Pathfinder" };
+  const G = { playerNames: ["Player 1", "Player 2", "Player 3", "Player 4"], mode: "mission", compN: 2, compNames: ["Team 1", "Team 2", "Team 3", "Team 4"], comp: null, delta: null, shareUrl: "", note: "", cmpSel: new Set(), phase: "setup", players: 1, role: "all", approved: new Set(), result: null, design: MD.defaultDesign("coast"), team: "Team Pathfinder" };
   const saved = store.get("md.design", null);
   if (saved && MD.SCENARIOS[saved.scenario]) G.design = Object.assign(MD.defaultDesign(saved.scenario), saved);
   const persist = () => store.set("md.design", G.design);
@@ -56,7 +56,7 @@
 
   function setPhase(p) { clearFlight(); G.phase = p; render(); window.scrollTo(0, 0); const t = app.querySelector("h1"); if (t) { t.setAttribute("tabindex", "-1"); t.focus({ preventScroll: true }); } if (p === "flight") runFlight(); }
   function startDesigning() {
-    G.approved.clear(); G.delta = null; G.note = "";
+    G.approved.clear(); G.delta = null; G.note = ""; G.log = [];
     if (G.mode === "comp") {
       const df = G.design.difficulty; G.design = MD.defaultDesign(G.design.scenario); G.design.difficulty = df;
       G.players = 1; G.role = "all"; G.comp = { idx: 0, seed: 1000 + Math.floor(Math.random() * 9000), entries: [] };
@@ -64,7 +64,13 @@
     else G.role = G.players === 1 ? "all" : Object.keys(MD.ROLES)[0];
     setPhase("build");
   }
-  function setD(k, v) { G.design[k] = v; G.approved.clear(); persist(); render(true); }
+  const CATS = { launcher: MD.LAUNCHERS, orbit: MD.ORBITS, bus: MD.BUSES, solar: MD.SOLAR, battery: MD.BATTERY, comms: MD.COMMS, prop: MD.PROP, ground: MD.GROUND };
+  const sg = (n, u) => (Math.abs(n) < 0.05 ? "" : (n > 0 ? "+" : "") + n.toFixed(1) + " " + u);
+  function logChange(name, A0, A1) {
+    const bits = [sg(A1.mass.used - A0.mass.used, "kg"), sg(A1.budget.used - A0.budget.used, "M"), sg(A1.power.load - A0.power.load, "W use"), sg(A1.power.gen - A0.power.gen, "W made"), A1.mass.cap !== A0.mass.cap ? "rocket limit " + A0.mass.cap + " to " + A1.mass.cap + " kg" : ""].filter(Boolean);
+    G.log = [name + (bits.length ? ": " + bits.join(", ") : ": no change to the numbers")].concat(G.log || []).slice(0, 4);
+  }
+  function setD(k, v) { const A0 = MD.analyse(G.design); G.design[k] = v; logChange(CATS[k] && CATS[k][v] ? CATS[k][v].name : k, A0, MD.analyse(G.design)); G.approved.clear(); persist(); render(true); }
 
   // ------------ setup ------------
   const artEl = (html) => { const w = document.createElement("span"); w.className = "mcard-frame"; w.innerHTML = html; return w; };
@@ -79,7 +85,7 @@
     return h("div", {},
       h("section", { class: "hero" }, h("p", { class: "kicker" }, "MISSION CONTROL"), h("h1", {}, "Design a space mission"),
         h("p", { class: "sub" }, "Build a spacecraft. Pick a rocket and an orbit. Survive 30 days of surprises. Earn stars and badges. All numbers are a simplified teaching model."),
-        h("ul", { class: "hudrow" }, h("li", {}, h("span", {}, "Stars"), h("b", {}, totalStars() + " / 9")), h("li", {}, h("span", {}, "Badges"), h("b", {}, store.get("md.badges", []).length + " / " + MD.BADGES.length)), h("li", {}, h("span", {}, "Mode"), h("b", {}, { mission: "Scored", sandbox: "Sandbox", comp: "Competition" }[G.mode])))),
+        h("ul", { class: "hudrow" }, h("li", {}, h("span", {}, "Stars"), h("b", {}, totalStars() + " / 9")), h("li", {}, h("span", {}, "Badges"), h("b", {}, store.get("md.badges", []).length + " / " + MD.BADGES.length)), h("li", {}, h("span", {}, "Rank"), h("b", {}, totalStars() >= 9 ? "Legend" : totalStars() >= 6 ? "Director" : totalStars() >= 3 ? "Engineer" : "Cadet")), h("li", {}, h("span", {}, "Mode"), h("b", {}, { mission: "Scored", sandbox: "Sandbox", comp: "Competition" }[G.mode])))),
       h("div", { class: "grp" }, h("h3", {}, "1. Choose a mission"),
         h("div", { class: "mcards" }, Object.entries(MD.SCENARIOS).map(([id, s]) => {
           const pr = store.get("md.progress", {})[id] || { stars: 0, best: 0 };
@@ -102,7 +108,8 @@
       G.mode !== "mission" ? null : h("div", { class: "grp" }, h("h3", {}, "4. Players"),
         h("div", { class: "chips" }, [1, 2, 3, 4].map((n) => h("button", { class: "pick", "aria-pressed": G.players === n, onclick: () => { G.players = n; G.role = n === 1 ? "all" : Object.keys(MD.ROLES)[0]; render(); } }, n === 1 ? "Solo" : n + " players"))),
         h("p", { class: "why" }, G.players === 1 ? "You hold every role." : "Pass the screen around. Each person owns some choices (a role) and the launch needs every role to approve. Talk it out: your choices change each other's numbers."),
-        G.players > 1 ? h("p", {}, h("label", {}, "Team name ", h("input", { class: "txt", value: G.team, maxlength: 24, oninput: (e) => { G.team = e.target.value; } }))) : null),
+        G.players > 1 ? h("p", {}, h("label", {}, "Team name ", h("input", { class: "txt", value: G.team, maxlength: 24, oninput: (e) => { G.team = e.target.value; } }))) : null,
+        G.players > 1 ? h("ul", { class: "assign" }, MD.assignRoles(G.players).map((rs, i) => h("li", {}, h("label", {}, `Player ${i + 1} name `, h("input", { class: "txt", value: G.playerNames[i], maxlength: 16, oninput: (e) => { G.playerNames[i] = e.target.value || "Player " + (i + 1); } })), h("span", { class: "dim small" }, " holds: " + rs.map((r) => MD.ROLES[r].name).join(" + "))))) : null),
       h("div", { class: "scenario-brief hint" }, h("b", {}, MD.SCENARIOS[sc].title + ": "), MD.SCENARIOS[sc].hint, h("br"), h("span", { class: "dim small" }, MD.SCENARIOS[sc].real)),
       G.note ? h("div", { class: "msg", role: "status" }, G.note) : null,
       h("button", { class: "btn primary big", onclick: startDesigning }, "Start designing"),
@@ -122,7 +129,7 @@
       h("div", { class: "sgrid" }, Object.entries(cat).map(([id, it]) => {
         const on = multi ? d.payloads.includes(id) : d[key] === id;
         return h("button", { class: "pick", "aria-pressed": on, onclick: () => {
-          if (multi) { const s = new Set(d.payloads); s.has(id) ? s.delete(id) : s.add(id); d.payloads = [...s]; G.approved.clear(); persist(); render(true); } else setD(key, id);
+          if (multi) { const A0 = MD.analyse(d), had = d.payloads.includes(id), s = new Set(d.payloads); s.has(id) ? s.delete(id) : s.add(id); d.payloads = [...s]; logChange((had ? "Removed " : "Installed ") + it.name, A0, MD.analyse(d)); G.approved.clear(); persist(); render(true); } else setD(key, id);
         } }, MR.mdArt.icon(key, id), h("span", { class: "pick-body" }, h("b", {}, it.name), it.note ? h("span", { class: "pick-note" }, it.note) : null, h("span", { class: "nums" }, show(it)), key === "launcher" ? capBar(it) : null));
       })));
   }
@@ -151,13 +158,20 @@
     return wrap;
   }
 
+  function forecast(A) {
+    const od = A.valid ? MD.odds(G.design, 60) : null;
+    if (!od) return h("p", { class: "small dim forecast" }, "Mission odds appear when the design can launch.");
+    const pct = Math.round(od.win * 100);
+    return h("div", { class: "forecast" }, h("p", { class: "small" }, h("b", {}, "Mission odds: "), pct + "% success", h("span", { class: "dim" }, " (" + od.n + " simulated flights)")), h("div", { class: "bar " + (pct < 50 ? "warn" : "") }, h("i", { style: "width:" + pct + "%" })));
+  }
   function dashboard(A, sc) {
     const crit = (k) => sc.critical.includes(k) ? h("span", { class: "crit" }, "critical") : null;
     const res = (key, label, used, cap, text, over) => h("div", { class: "res" },
       h("div", { class: "row" }, h("span", {}, h("b", {}, label), crit(key), h("span", { class: "stat" + (over ? " bad" : "") }, over ? "over the limit" : used / (cap || 1) > 0.9 ? "tight" : "ok")), h("span", {}, text)),
       h("div", { class: "bar " + (over ? "bad" : used / (cap || 1) > 0.9 ? "warn" : "") }, h("i", { style: `width:${clampPct((used / (cap || 1)) * 100)}%` })),
       h("p", { class: "why" }, WHY[key]));
-    return h("aside", { class: "dash side", tabindex: "0", "aria-label": "Your spacecraft and the six limits" }, craftSVG(G.design, A), h("div", { class: "hudcol card" }, h("h3", {}, "Mission dashboard"), h("div", { class: "hudgrid" },
+    return h("aside", { class: "dash side", tabindex: "0", "aria-label": "Your spacecraft and the six limits" }, craftSVG(G.design, A),
+      (G.log || []).length ? h("ul", { class: "shiplog", "aria-label": "Ship log", "aria-live": "polite" }, G.log.map((t) => h("li", {}, t))) : null, h("div", { class: "hudcol card" }, h("h3", {}, "Mission dashboard"), h("div", { class: "hudgrid" },
       res("mass", "Mass", A.mass.used, A.mass.cap || 1, A.mass.cap ? `${num(A.mass.used)} / ${A.mass.cap} kg` : `${num(A.mass.used)} kg, this rocket cannot reach this orbit`, A.mass.used > A.mass.cap),
       res("power", "Power", A.power.load, Math.max(A.power.gen, 0.1), `use ${num(A.power.load)} W / make ${num(A.power.gen)} W`, A.power.gen < A.power.load),
       res("budget", "Budget", A.budget.used, A.budget.cap, `${num(A.budget.used)} / ${num(A.budget.cap)} M`, A.budget.used > A.budget.cap),
@@ -166,6 +180,7 @@
       res("time", "Time to launch", A.time.weeks, A.time.deadline, `${num(A.time.weeks, 0)} / ${num(A.time.deadline, 0)} weeks`, A.time.weeks > A.time.deadline)),
       h("p", { class: "small" }, h("b", {}, "Science possible: "), `${num(A.science.potential, 0)} points (target ${sc.target})`),
       h("div", { class: "bar " + (A.science.potential >= sc.target ? "" : "warn") }, h("i", { style: `width:${clampPct(A.science.potential / sc.target * 100)}%` })),
+      forecast(A),
       A.problems.map((p) => h("div", { class: "msg" }, p)),
       A.warnings.map((p) => h("div", { class: "msg warn" }, p))));
   }
@@ -177,16 +192,27 @@
       h("div", { class: "lb-actions" }, note, h("button", { class: "btn primary big go-btn", disabled: !canGo, onclick: launch }, "Launch mission")));
   }
 
+  const holder = (roleId) => { const i = MD.assignRoles(G.players).findIndex((rs) => rs.includes(roleId)); return G.playerNames[i] || "Player " + (i + 1); };
+  const meter = (label, frac, text) => h("li", {}, h("span", {}, label), h("div", { class: "bar" }, h("i", { style: "width:" + Math.round(frac * 100) + "%" })), h("b", {}, text));
+  function teamBoard(A, roles) {
+    const rr = MD.roleReport(A), met = roles.filter((r) => rr[r].ok).length, cur = rr[G.role], role = MD.ROLES[G.role];
+    return h("section", { class: "team card", "aria-label": "Team board" },
+      h("h3", {}, "Team board: " + G.team),
+      h("ul", { class: "meters" }, meter("Harmony", met / roles.length, met + " of " + roles.length + " goals met"), meter("Ready", G.approved.size / roles.length, G.approved.size + " of " + roles.length + " ready")),
+      h("div", { class: "roles rolecards", role: "tablist" }, roles.map((r) => {
+        const icon = MR.mdArt.icon("role", r);
+        return h("button", { role: "tab", "aria-selected": G.role === r, class: "rolecard" + (G.approved.has(r) ? " ok" : "") + (rr[r].ok ? "" : " warn"), onclick: () => { G.role = r; render(true); } },
+          icon, h("span", { class: "rc-body" }, h("b", {}, MD.ROLES[r].name), h("span", { class: "rc-who" }, holder(r)), h("span", { class: "rc-state" }, (rr[r].ok ? "Goal met" : "Needs work") + (G.approved.has(r) ? " · Ready" : ""))));
+      })),
+      h("div", { class: "msg role-detail" }, h("b", {}, `Now playing: ${holder(G.role)} (${role.name})`), h("p", {}, "Goal: " + role.goal),
+        cur.ok ? h("p", {}, "This goal is met right now. Tell the others when you are ready.") : h("p", {}, cur.note + " Ask for help: " + cur.needs.map((id) => MD.ROLES[id].name + " (" + holder(id) + ")").join(", ") + ".")));
+  }
   function build() {
     const d = G.design, sc = MD.SCENARIOS[d.scenario], A = MD.analyse(d), roles = Object.keys(MD.ROLES);
     const owned = G.role === "all" ? ["launcher", "orbit", "ground", "bus", "solar", "battery", "prop", "payloads", "comms"] : roleKeys(G.role);
     const banner = G.mode === "sandbox" ? "Sandbox: limits only warn here and nothing is scored." : G.mode === "comp" && G.comp ? `${G.compNames[G.comp.idx]} is designing (team ${G.comp.idx + 1} of ${G.compN}). Same mission and same random events for every team. One launch per team.` : "";
-    const panel = [banner ? h("div", { class: "msg", role: "status" }, banner) : null, G.note ? h("div", { class: "msg", role: "status" }, G.note) : null, tourCard(), h("div", { class: "hint" }, h("b", {}, sc.title + ": "), sc.objective, " ", sc.hint)];
-    if (G.players > 1) {
-      panel.push(h("div", { class: "roles", role: "tablist" }, roles.map((r) => h("button", { role: "tab", "aria-selected": G.role === r, class: G.approved.has(r) ? "ok" : "", onclick: () => { G.role = r; render(); } }, `${MD.ROLES[r].name}`))));
-      const r = MD.ROLES[G.role];
-      panel.push(h("div", { class: "msg" }, h("b", {}, r.name + " goal: "), r.goal, " ", r.check(A) ? "Right now: met." : "Right now: not met yet."));
-    }
+    const panel = [banner ? h("div", { class: "msg", role: "status" }, banner) : null, G.note ? h("div", { class: "msg", role: "status" }, G.note) : null, tourCard(), h("div", { class: "hint briefing" }, h("span", { class: "kicker" }, "MISSION BRIEFING"), h("b", {}, sc.title + ": "), sc.objective, " ", sc.hint)];
+    if (G.players > 1) panel.push(teamBoard(A, roles));
     owned.forEach((k) => panel.push(GROUPS[k]()));
     if (G.players > 1) panel.push(h("div", { class: "row-actions" },
       h("button", { class: "btn", onclick: () => { G.approved.has(G.role) ? G.approved.delete(G.role) : G.approved.add(G.role); render(true); } }, G.approved.has(G.role) ? "Take back approval" : `Approve as ${MD.ROLES[G.role].name}`),
@@ -202,7 +228,7 @@
         h("button", { class: "btn", onclick: () => saveDesign(A) }, "Save this design"),
         G.mode === "comp" ? null : h("button", { class: "btn", onclick: shareLink }, "Copy share link"),
         G.shareUrl ? h("input", { class: "txt", readonly: true, value: G.shareUrl, "aria-label": "Share link", style: "min-width:260px", onfocus: (e) => e.target.select() }) : null),
-      launchBar(A, canGo, G.mode === "sandbox" && !A.valid ? h("span", { class: "dim small", role: "status" }, "Sandbox: this design breaks " + A.problems.length + " limit(s). You can still launch it.") : !A.valid ? h("span", { class: "dim small", role: "status" }, canGoNote + " Fix the items marked in the dashboard first.") : G.players > 1 && !canGo ? h("span", { class: "dim small" }, "Every role must approve.") : null));
+      launchBar(A, canGo, G.mode === "sandbox" && !A.valid ? h("span", { class: "dim small", role: "status" }, "Sandbox: this design breaks " + A.problems.length + " limit(s). You can still launch it.") : !A.valid ? h("span", { class: "dim small", role: "status" }, canGoNote + " Fix the items marked in the dashboard first.") : G.players > 1 && !canGo ? h("span", { class: "dim small" }, "Every role must approve.") : G.players > 1 ? h("span", { class: "ready-all", role: "status" }, "ALL HANDS READY") : null));
   }
   function roleKeys(r) { return { planner: ["launcher", "orbit", "ground"], craft: ["bus", "solar", "battery", "prop"], science: ["payloads"], comms: ["comms"] }[r]; }
 
@@ -409,6 +435,12 @@
     dlg.replaceChildren(h("h2", {}, "How it works"),
       h("button", { class: "btn small", onclick: () => { G.tour = 0; dlg.close(); if (G.phase !== "build") setPhase("build"); else render(true); } }, "Replay the quick tour"),
       h("ol", {}, h("li", {}, "Choose a mission, a difficulty and how many people play."), h("li", {}, "Build: bus, solar panels, battery, radio, instruments, rocket, orbit. Watch the six resources: mass, power, budget, data, communications, time."), h("li", {}, "Launch. The mission runs for 30 days, with random events. A report explains why it worked or not."), h("li", {}, "Redesign and fly again. Try a cheap design and a bold one: both can work.")),
+      h("h3", {}, "How teamwork works"),
+      h("ul", { class: "tight" },
+        h("li", {}, "Pick 2 to 4 players. The game hands out four roles: Mission planner (rocket, orbit, ground stations), Spacecraft engineer (bus, panels, battery, propulsion), Science lead (instruments) and Communications lead (radio). With 2 players each holds two roles; with 3 the Science lead also holds Communications."),
+        h("li", {}, "Pass the screen. Only the chosen role's parts are shown, so you must ask the others to change theirs."),
+        h("li", {}, "Every role has a goal with a live status (Goal met or Needs work) and a note saying who can help. The Harmony bar counts goals met; it becomes the teamwork score (15 points)."),
+        h("li", {}, "Launch needs every role to press Ready. Any change clears all Ready lights, so the team talks again before launching.")),
       h("p", {}, h("a", { href: "model.html" }, "Model notes: formulas, simplifications and NASA sources")),
       h("p", { class: "small dim" }, "All numbers are simplified for teaching. They are not data for any real rocket or spacecraft. Terrain data in the Mars game is from USGS."),
       h("button", { class: "btn", onclick: () => dlg.close() }, "Close"));

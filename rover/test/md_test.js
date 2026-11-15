@@ -76,6 +76,16 @@ ok(MD.stars("success", 95) === 3 && MD.stars("success", 80) === 2 && MD.stars("p
   ok(MD.badgesFor(dd, MD.simulate(D("coast", { launcher: "rideshare", orbit: "polar" }), 1)).length === 0, "no badges without a success");
   const gg = MD.goNoGo(MD.analyse(dd)); ok(Object.values(gg).every((v) => v === "GO"), "reference design is all GO: " + JSON.stringify(gg)); }
 { const gg = MD.goNoGo(MD.analyse(D("coast", { launcher: "rideshare", orbit: "polar" }))); ok(gg.mass === "NO-GO", "unreachable orbit is NO-GO on mass"); }
+// 15. teamwork: role assignment, role report, odds
+ok(MD.assignRoles(1)[0].length === 4 && MD.assignRoles(2).length === 2 && MD.assignRoles(3).length === 3 && MD.assignRoles(4).every((r) => r.length === 1), "role assignment sizes");
+for (const n of [1, 2, 3, 4]) ok([].concat(...MD.assignRoles(n)).sort().join() === Object.keys(MD.ROLES).sort().join(), "every role is held by exactly one player for " + n);
+{ const good = MD.roleReport(MD.analyse(SOL.coast[0])); ok(Object.values(good).every((x) => x.ok && x.note === ""), "good design: every role content");
+  const weak = MD.roleReport(MD.analyse(D("coast", {}))); ok(weak.science.ok === false && /Science possible/.test(weak.science.note) && weak.science.needs.length > 0, "starter design: science lead has a concern with helpers named");
+  const bad = MD.roleReport(MD.analyse(D("coast", { launcher: "rideshare", orbit: "polar" }))); ok(!bad.planner.ok && /cannot reach/.test(bad.planner.note), "planner explains an unreachable orbit");
+  // the report agrees with the role checks used for the score
+  for (const k of Object.keys(MD.ROLES)) ok(MD.roleReport(MD.analyse(SOL.coast[1]))[k].ok === MD.ROLES[k].check(MD.analyse(SOL.coast[1])), "roleReport matches ROLES.check for " + k); }
+{ const od = MD.odds(SOL.coast[0], 40); ok(od && od.win > 0.6 && od.n === 40 && JSON.stringify(od) === JSON.stringify(MD.odds(SOL.coast[0], 40)), "odds are sensible and repeatable");
+  ok(MD.odds(D("coast", { launcher: "rideshare", orbit: "polar" })) === null, "no odds for a design that cannot launch"); }
 // 13. the demo mode seed (7, launch adds 1) shows events and a success on the real model
 { const dd = D("coast", { launcher: "small", orbit: "sso", bus: "u6", solar: "wings", battery: "m", comms: "sband", payloads: ["multi", "camera"], ground: "single" }); const o = MD.simulate(dd, 8); ok(o.outcome === "success" && o.events.length >= 2, "demo seed 8 gives a success with events: " + o.outcome + " " + o.events.length); }
 console.log(report.join("\n"));

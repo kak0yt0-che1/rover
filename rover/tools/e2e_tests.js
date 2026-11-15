@@ -353,4 +353,38 @@ module.exports = async function (H) {
     expect(await inView(), "craft not visible after changing a part");
     await page.ctx.close();
   });
+  // 21. coop logic: role assignment, team board, concerns with helpers, harmony, all hands ready, odds
+  await test("coop: assignment, team board, concerns, ready", async (problems) => {
+    const page = await newPage({ width: 1366, height: 768 }, problems);
+    await page.goto(H.getBase() + "mission.html"); await page.evaluate(() => { try { localStorage.clear(); } catch (e) {} }); await page.reload();
+    await btn(page, "3 players").click();
+    expect((await page.locator("ul.assign li").count()) === 3, "three player rows expected");
+    expect((await page.locator("ul.assign li").nth(2).innerText()).includes("Science lead + Communications and data lead"), "player 3 should hold science and comms");
+    await page.locator("ul.assign input").first().fill("Aya");
+    await btn(page, "Start designing").click(); await page.locator("button", { hasText: "Skip the tour" }).click();
+    const board = page.locator("section.team");
+    expect((await board.innerText()).includes("Aya"), "player name should appear on the board");
+    expect((await board.innerText()).includes("3 of 4 goals met"), "starter design: science goal unmet, so harmony 3 of 4");
+    await page.locator('[role="tab"]', { hasText: "Science lead" }).click();
+    const detail = await page.locator(".role-detail").innerText();
+    expect(/Needs|Science possible/.test(detail) && /Ask for help/.test(detail), "science concern with helpers expected: " + detail.slice(0, 160));
+    expect((await page.locator(".forecast").innerText()).includes("Mission odds"), "forecast missing");
+    await setDesign(page, SOL.coast[0]);
+    expect((await board.innerText()).includes("4 of 4 goals met"), "good design: harmony 4 of 4");
+    for (let i = 0; i < 4; i++) { await page.locator('[role="tab"]').nth(i).click(); await page.locator("button", { hasText: /^Approve as / }).click(); }
+    expect((await page.locator(".ready-all").count()) === 1, "ALL HANDS READY expected");
+    expect((await board.innerText()).includes("4 of 4 ready"), "ready meter 4 of 4");
+    await page.ctx.close();
+  });
+  // 22. ship log shows what a change did
+  await test("ship log names the effect of a change", async (problems) => {
+    const page = await newPage({ width: 1366, height: 768 }, problems);
+    await startScenario(page, "coast", "Normal");
+    await pick(page, "X-band radio").click();
+    const t = await page.locator("ul.shiplog li").first().innerText();
+    expect(t.startsWith("X-band radio") && /kg/.test(t) && /W use/.test(t), "log text: " + t);
+    await pick(page, "Multispectral imager").click();
+    expect((await page.locator("ul.shiplog li").first().innerText()).startsWith("Installed Multispectral imager"), "install message expected");
+    await page.ctx.close();
+  });
 };

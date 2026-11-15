@@ -16,7 +16,7 @@ Status: done / partial / missing. Proof = test name (in `tools/e2e_tests.js` unl
 | Random events | done | events in `MD.simulate`; demo seed check in `md_test.js` |
 | Modify design and rerun | done | "Redesign" and "Fly again" in the flow tests |
 | Clear feedback, post-mission analysis | done | "Why it went this way"; "post-mission delta" test |
-| 1 to 4 players, distinct roles, shared decisions | done (hot-seat) | "team mode 2, 3, 4 players" tests. Negotiation is by talking; the game enforces approval |
+| 1 to 4 players, distinct roles, shared decisions | done (hot-seat) | "team mode 2, 3, 4 players" and "coop: assignment, team board, concerns, ready" tests; `MD.assignRoles`, `MD.roleReport` in `md_test.js`. Negotiation is by talking; the game shows concerns and who can help, and enforces approval |
 | Outcome depends on coordination | partial | teamwork score = roles whose goal the final design meets |
 | Cooperative mode | done | team mode |
 | Competitive mode between teams | done | "team competition" test |

@@ -277,6 +277,45 @@
       check: (A) => A.comms.ratio >= 0.8 },
   };
 
+  // ---------- teamwork ----------
+  // Which player holds which roles. With 1 player that player holds all four; with 2 they hold two each;
+  // with 3 the science lead also takes communications; with 4 each player holds one.
+  MD.assignRoles = function (n) {
+    const all = Object.keys(MD.ROLES);
+    n = Math.max(1, Math.min(4, n | 0));
+    if (n === 1) return [all.slice()];
+    if (n === 2) return [["planner", "craft"], ["science", "comms"]];
+    if (n === 3) return [["planner"], ["craft"], ["science", "comms"]];
+    return all.map((r) => [r]);
+  };
+  // For each role: is its goal met, what is wrong in plain words, and which other roles can help fix it.
+  MD.roleReport = function (A) {
+    const f = (x, d) => x.toFixed(d == null ? 1 : d);
+    const rep = {};
+    const plan = [];
+    if (A.mass.cap === 0) plan.push("The rocket cannot reach this orbit.");
+    else if (A.mass.margin < 0) plan.push("The spacecraft is heavier than the rocket can carry to this orbit.");
+    if (A.budget.used > A.budget.cap) plan.push("Cost is " + f(A.budget.used - A.budget.cap) + " M over the budget.");
+    if (A.time.weeks > A.time.deadline) plan.push("The launch window is missed by " + f(A.time.weeks - A.time.deadline, 0) + " weeks.");
+    rep.planner = { ok: plan.length === 0, note: plan.join(" "), needs: ["craft", "science"] };
+    const eng = [];
+    if (A.power.gen < A.power.load) eng.push("The panels make " + f(A.power.gen) + " W but the spacecraft uses " + f(A.power.load) + " W.");
+    if (A.power.batteryUse > 0.8) eng.push("The battery is too small to carry the eclipse.");
+    if (A.mass.margin < 0.05 && A.mass.cap > 0) eng.push("Mass margin is under 5%.");
+    rep.craft = { ok: eng.length === 0, note: eng.join(" "), needs: ["science", "comms", "planner"] };
+    rep.science = { ok: A.science.potential >= A.science.target, note: A.science.potential >= A.science.target ? "" : "Science possible is " + f(A.science.potential, 0) + " of " + A.science.target + " needed. Add or swap an instrument.", needs: ["craft", "planner"] };
+    rep.comms = { ok: A.comms.ratio >= 0.8, note: A.comms.ratio >= 0.8 ? "" : "The radio can send only " + f(A.comms.ratio * 100, 0) + "% of the daily data.", needs: ["planner", "science"] };
+    return rep;
+  };
+  // Quick forecast: fly the design with seeds 1..n and report how often it succeeds. Deterministic.
+  MD.odds = function (d, n) {
+    n = n || 60;
+    if (!MD.analyse(d).valid) return null;
+    let win = 0, part = 0, tot = 0;
+    for (let s = 1; s <= n; s++) { const o = MD.simulate(d, s); if (o.outcome === "success") win++; else if (o.outcome === "partial") part++; tot += o.score.total; }
+    return { win: win / n, partial: part / n, avg: tot / n, n };
+  };
+
   // 100 points: mission performance 30, science value 20, resource efficiency 20, decision quality 15, collaboration 15
   MD.score = function (d, A, out) {
     const sc = MD.SCENARIOS[d.scenario];

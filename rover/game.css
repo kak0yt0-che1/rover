@@ -152,3 +152,33 @@ svg.liftoff.go .streak { animation: streak .45s linear infinite; }
   .lb-actions .btn.go-btn { width: 100%; justify-content: center; }
   .launchbar { gap: 6px; }
 }
+
+/* teamwork */
+.team { margin-bottom: var(--s3); }
+.team h3 { font: 600 12px var(--mono); letter-spacing: .24em; text-transform: uppercase; color: var(--accent-hi); margin: 0 0 var(--s1); }
+.meters { list-style: none; margin: 0 0 var(--s2); padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--s1) var(--s3); }
+.meters li { display: grid; grid-template-columns: 70px 1fr auto; gap: var(--s1); align-items: center; font: 12px var(--mono); }
+.meters li span { color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }
+.rolecards { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--s1); margin-bottom: var(--s2) !important; }
+.rolecard { display: flex; gap: var(--s1); align-items: center; text-align: left; padding: 8px 12px !important; min-height: 64px; background: #101114 !important; border: 1px solid #262930 !important; border-radius: var(--r); color: var(--text) !important; }
+.rolecard[aria-selected="true"] { border-color: var(--accent) !important; box-shadow: 0 0 0 1px var(--accent) inset, 0 0 18px #e0703f22; }
+.rolecard.ok { border-left: 4px solid var(--accent-hi) !important; }
+.rolecard.warn .rc-state { color: var(--accent-hi); }
+.rolecard.ok::after { content: ""; }
+.rolecard .pick-icon { width: 40px; height: 40px; flex: 0 0 auto; }
+.rc-body { display: flex; flex-direction: column; min-width: 0; }
+.rc-body b { font-size: 14px; }
+.rc-who { font: 12px var(--mono); color: var(--accent-hi); }
+.rc-state { font-size: 12px; color: var(--dim); }
+.role-detail p { margin: 4px 0 0; font-size: 14px; }
+.assign { list-style: none; margin: 0 0 var(--s1); padding: 0; display: grid; gap: var(--s1); }
+.ready-all { font: 700 14px var(--mono); letter-spacing: .14em; color: var(--accent-hi); animation: ready 2s ease-in-out infinite; padding: 4px 12px; border: 1px solid var(--accent); border-radius: var(--r); }
+.forecast { margin: var(--s1) 0; }
+.hint.briefing .kicker { display: block; font-size: 11px; margin-bottom: 4px; }
+@media (prefers-reduced-motion: reduce) { .ready-all { animation: none; } }
+.assign li { display:flex; align-items:center; gap:var(--s1); flex-wrap:wrap; }
+
+.shiplog { list-style: none; margin: 0 0 var(--s1); padding: 0; display: grid; gap: 4px; }
+.shiplog li { font: 12px var(--mono); color: var(--dim); border-left: 3px solid var(--accent); background: #101114; padding: 4px 8px; }
+.shiplog li:first-child { color: var(--text); animation: enter 200ms ease-out both; }
+@media (max-width: 900px) { .shiplog { display: none; } }

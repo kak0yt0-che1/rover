@@ -118,6 +118,12 @@
       lcam: S(`<circle cx="16" cy="14" r="7" fill="#222"/><circle cx="16" cy="14" r="3" fill="${ACC}" stroke="none"/><circle cx="25" cy="25" r="4" fill="#222"/>`),
     },
   };
+  ICON.role = {
+    planner: S('<circle cx="16" cy="16" r="5" fill="#222"/><ellipse cx="16" cy="16" rx="12" ry="6" stroke-dasharray="3 3" transform="rotate(-25 16 16)"/><circle cx="26" cy="10" r="2" fill="' + ACC + '" stroke="none"/><path d="M4 28 H28"/>'),
+    craft: S('<rect x="9" y="9" width="14" height="14" rx="2" fill="#222"/><rect x="1" y="12" width="7" height="8" fill="#26323f"/><rect x="24" y="12" width="7" height="8" fill="#26323f"/><circle cx="16" cy="16" r="3" stroke="' + ACC2 + '"/>'),
+    science: S('<path d="M12 4 H20 M14 4 V13 L7 26 H25 L18 13 V4" fill="#222"/><path d="M10 22 H22" stroke="' + ACC + '"/>'),
+    comms: S('<path d="M6 12 Q16 28 26 12Z" fill="#222"/><line x1="16" y1="18" x2="16" y2="6" stroke="' + ACC + '"/><circle cx="16" cy="5" r="2" fill="' + ACC2 + '"/><path d="M22 3 Q28 6 28 12" stroke="' + ACC + '"/>'),
+  };
   MR.mdArt.icon = function (group, id) { const html = (ICON[group] && ICON[group][id]) || ""; const el = document.createElement("span"); el.className = "pick-icon"; el.innerHTML = html; return el; };
 
   // ---------- mission card art (320 x 150) ----------

@@ -29,6 +29,14 @@ Pick a mission, design a small spacecraft (bus, solar panels, battery, radio, in
 - **Rover Rules** (`rover.html`): program a Mars rover with IF / ELSE IF / ELSE blocks on real Jezero crater terrain.
 - Demo mode: `mission.html?demo=1` replays a scripted run of the real game with captions (used for the video).
 
+## How teamwork works (2 to 4 players, one screen)
+- Four roles share the design: **Mission planner** (rocket, orbit, ground stations), **Spacecraft engineer** (bus, panels, battery, propulsion), **Science lead** (instruments) and **Communications lead** (radio). The game hands them out: 2 players hold two roles each, 3 players (the Science lead also holds Communications), 4 players one each. Players can be named in the setup.
+- Pass the screen. A player sees only the parts of the selected role, so changing someone else's part means asking them.
+- The **team board** shows each role's goal live (Goal met or Needs work), a note saying what is wrong and which roles can help, a Harmony bar (goals met) and a Ready bar.
+- Launch needs every role to press Ready. Any change clears all Ready lights, so the team talks again; when all four are ready the bar says ALL HANDS READY.
+- The score's teamwork part (15 points) is the share of roles whose goal the final design meets. Competing priorities are real: more instruments cost mass, power and money, a faster radio costs power.
+- In team competition each team plays on its own with the same random events and the ranking decides the winner.
+
 ## Controls
 Mouse or touch. Keyboard: Tab to move, Enter or Space to choose, Escape closes dialogs.
 
