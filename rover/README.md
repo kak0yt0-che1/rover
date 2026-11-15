@@ -1,11 +1,70 @@
-# Rover Rules (working title): program a Mars rover to survive
+# Mission Design (with the Mars game Rover Rules)
 
-NASA Space Apps Challenge 2026. You are the engineer, not the driver: design a rover, write IF-THEN rules, send them up as one package, watch the sol play out, read the replay, fix the rules.
+A browser game for 1 to 4 players, made for the NASA Space Apps Challenge 2026, challenge **Space Mission Design Game**
+(https://github.com/NASA-SPACEAPP-2026/Space-Mission-Design-Game). Not affiliated with or endorsed by NASA.
 
-## Run it
-- Open `index.html` in a browser (works from disk, no server, no build step).
-- Publish: push this folder to a GitHub repo, then Settings > Pages > deploy from the main branch root. The Pages URL is the public demo link.
-- Logic tests without graphics: `node test/console_test.js` and `node test/balance_test.js`.
+**Play:** `[PUBLIC URL: fill in after deploying, see DEPLOY.md]`, or open `index.html` from this folder in a browser (no install, no server, no build step).
+
+## Animated missions
+Pressing Launch plays the mission in one scene (`src/md_flight.js`, SVG drawn in code, no assets): countdown, ascent (Max-Q, booster and stage separation, fairing jettison, spacecraft release), for the Moon mission a trans-lunar transit and an orbit burn, then wing deployment and the 30 days in orbit. In orbit you see the Sun, the day and night side, eclipse, the instrument beam or field, ground-station downlink and the random events, all taken from the real simulation result. The T+ clock and stage timings are illustrative, not data about a real rocket. Reduced-motion users skip straight to the report; "Skip to report" is always there.
+
+## What it is
+Pick a mission, design a small spacecraft (bus, solar panels, battery, radio, instruments, propulsion), choose a rocket and an orbit, then fly a 30-day mission with random events. The dashboard shows the six limits live: **mass, power, budget, data, communications, time**. A report says why it worked or failed. Redesign and fly again.
+
+## Play in 2 minutes
+1. Open `index.html`, press **Play Mission Design**.
+2. Choose "Coastal Watch", press **Start designing**. A short tour explains the six limits (skippable).
+3. The starting design is valid but modest. Add the "Multispectral imager", press **Launch mission**.
+4. Read the report. Press **Redesign**, change the radio, launch again: the game shows what changed.
+
+## Features (each one has an automated test, see COMPLIANCE.md)
+- Game feel: mission cards with art, stars (1 to 3) and 7 badges saved in your browser, a hangar with a live spacecraft drawing, a sticky GO / HOLD / NO-GO pre-launch check for the six limits, a countdown and liftoff, a day-by-day flight screen with live gauges and event alerts, optional sound (off by default), and animations that stop when your system asks for reduced motion.
+- 3 missions x 3 difficulty levels; several different designs can win (`docs/BALANCE.md` has the numbers).
+- Launch is blocked, with the reason, when the spacecraft is too heavy or the rocket cannot reach the orbit.
+- Random events: solar flare, ground-station outage, instrument glitch, wing failure, launch failure. A seed makes a mission replayable; every launch uses a new seed, and in team competition all teams share one seed.
+- Score (100 points): performance, science, resource efficiency, decision quality, teamwork.
+- Teams of 1 to 4 with roles (planner, spacecraft, science, communications); launch needs every role's approval.
+- Sandbox mode (limits only warn, unscored) and hot-seat team competition (same random events for every team, then a ranking).
+- Share a design as a link, save designs, compare two side by side, local leaderboard (this browser only).
+- Comparison with your last run of the same mission.
+- Quick tour and "why it matters" text next to every choice; `model.html` shows the formulas, simplifications and NASA-sourced values.
+- Keyboard use, text status next to colours, axe-core clean on the main screens.
+- **Rover Rules** (`rover.html`): program a Mars rover with IF / ELSE IF / ELSE blocks on real Jezero crater terrain.
+- Demo mode: `mission.html?demo=1` replays a scripted run of the real game with captions (used for the video).
+
+## How teamwork works (2 to 4 players, one screen)
+- Four roles share the design: **Mission planner** (rocket, orbit, ground stations), **Spacecraft engineer** (bus, panels, battery, propulsion), **Science lead** (instruments) and **Communications lead** (radio). The game hands them out: 2 players hold two roles each, 3 players (the Science lead also holds Communications), 4 players one each. Players can be named in the setup.
+- Pass the screen. A player sees only the parts of the selected role, so changing someone else's part means asking them.
+- The **team board** shows each role's goal live (Goal met or Needs work), a note saying what is wrong and which roles can help, a Harmony bar (goals met) and a Ready bar.
+- Launch needs every role to press Ready. Any change clears all Ready lights, so the team talks again; when all four are ready the bar says ALL HANDS READY.
+- The score's teamwork part (15 points) is the share of roles whose goal the final design meets. Competing priorities are real: more instruments cost mass, power and money, a faster radio costs power.
+- In team competition each team plays on its own with the same random events and the ranking decides the winner.
+
+## Controls
+Mouse or touch. Keyboard: Tab to move, Enter or Space to choose, Escape closes dialogs.
+
+## Run the tests (need Node.js 22; the tests also need Edge or Chrome installed)
+```
+npm install        # dev tools only: playwright-core and axe-core. The game itself has no dependencies.
+npm test           # model tests, balance check, rover logic tests
+npm run e2e        # real click tests of the UI (about 90 seconds)
+node tools/e2e.js --prefix=my-repo   # same tests served under a sub-path, as on GitHub Pages
+node tools/shots.js                  # screenshots into docs/shots
+node tools/record_demo.js            # demo video into demo/demo.webm (needs: npx playwright-core install ffmpeg)
+```
+Deploying: see `DEPLOY.md`. More: `model.html` (formulas), `docs/BALANCE.md`, `REFERENCES.md`, `AI_USE.md`, `DEMO.md`, `DEPLOY.md`.
+
+## Screenshots
+`docs/shots/` (1920x1080): `02_mission_setup.png`, `05_build_valid.png`, `04_launch_blocked.png`, `06_report.png`, `08_team_roles.png`, `10_model_notes.png`, `14_rover_debrief.png`.
+
+## Honest limits
+Mission Design numbers are simplified game values, not data for real spacecraft or rockets. Only the facts listed in `model.html` and `REFERENCES.md` come from NASA pages. Leaderboard and saved designs live in your browser only.
+
+---
+
+# Rover Rules (the Mars game)
+
+You are the engineer, not the driver: design a rover, write IF-THEN rules, send them up as one package, watch the sol play out, read the replay, fix the rules. Open `rover.html`.
 
 ## Structure (one owner per file)
 | File | What it does |
@@ -18,21 +77,28 @@ NASA Space Apps Challenge 2026. You are the engineer, not the driver: design a r
 | `src/sim.js` | the sol loop: `simulate(design, rules, mission) -> trace + summary`. No drawing here. |
 | `src/tune.js` | "AI co-pilot": hill-climbing search over rule thresholds (search, not a trained model) |
 | `src/visual.js` | rover drawing: animated side-view SVG for the assembly bay, top-down sprite for the map |
-| `src/ui.js`, `index.html`, `style.css` | screens; only plays back the trace |
+| `src/ui.js`, `rover.html`, `style.css` | Rover Rules screens; only plays back the trace |
+| `src/md_model.js`, `src/md_ui.js`, `mission.html`, `md.css` | Mission Design: pure model and score, then the screens |
+| `src/md_demo.js` | demo mode (clicks the real game, shows captions) |
+| `index.html`, `model.html` | landing page, model notes with formulas |
+| `tools/`, `test/` | e2e tests, serve, screenshots, recorder; unit and balance tests |
 | `tools/prep_terrain.py` | one-time data prep: USGS DEM -> `data/terrain_data.js` |
 
 ## Data
 - Elevation: USGS Astrogeology, Mars 2020 Terrain Relative Navigation CTX DTM Mosaic (Jezero crater, 20 m/px).
   https://astrogeology.usgs.gov/search/map/mars_2020_terrain_relative_navigation_ctx_dtm_mosaic
   Re-create the grid: download the GeoTIFF, then `python3 -I tools/prep_terrain.py JEZ_ctx_B_soc_008_DTM_MOLAtopography_DeltaGeoid_20m_Eqc_latTs0_lon0.tif data/` (needs `numpy`, `tifffile`).
-- Slope is computed by us. Terrain types (regolith / sand / rock) are a heuristic from slope and roughness, informed by NASA AI4Mars (not trained on it, not redistributed).
+- Slope is computed by us. Terrain types (regolith / sand / rock) are a heuristic from slope and roughness, our own rule; no NASA terrain-label data is used.
 
-## Still needs a human (do not trust AI for these)
-- Every entry in `src/config.js` marked `verified: false` (sol length, signal delay, temperatures, dust loss, tilt limit): look each up on a NASA page and paste the source.
-- Confirm the exact official challenge title and wording on spaceappschallenge.org and use it in the submission.
-- The short "Did you know?" lines in `src/ui.js` (FACTS) and the real-world notes in `src/missions.js` are written from general knowledge: confirm each against a NASA page before submitting.
-- Re-check the 2026 Project Submission Guide (demo limit, AI-use and watermark rules). The 2025 guide said: video up to 30 s or up to 7 slides, English or English subtitles.
-- At least two teammates should be able to explain `sim.js` and `rules.js` in plain words.
+## Sources for the Mars game numbers (each page opened on 2026-11-15)
+- Sol = 24 h 39 m 35 s: Royal Museums Greenwich, "How long is a day on Mars?" https://www.rmg.co.uk/stories/space-astronomy/how-long-day-on-mars (not a NASA page)
+- Signal delay up to about 22 min: NASA NTRS, "Communication Delays, Disruptions, and Blackouts for Crewed Mars Missions" (ASCEND 2022). The game does not simulate the delay.
+- Jezero air temperature about -83 to -23 C: NASA Science, "Daily records of atmospheric temperature with Perseverance" https://science.nasa.gov/blogs/daily-records-of-atmospheric-temperature-with-perseverance/ (the game's -73 to -7 C is a game value)
+- 2018 dust storm (sunlight blocked about four months, opacity peak 10.8 vs 0.5 average): NASA JPL, "Mars rover mission comes to an end but science legacy live on" https://www.jpl.nasa.gov/edu/resources/teachable-moment/mars-rover-mission-comes-to-an-end-but-science-legacy-live-on/ (opened 2026-11-15)ve-on
+- Perseverance tilt (designed for 45 deg, drivers avoid more than 30 deg) and Curiosity wheel wear: NASA Science, rover components https://science.nasa.gov/mission/mars-2020-perseverance/rover-components/
+- Opportunity stuck in a dune in 2005 (more than five weeks to escape): NASA JPL PIA07999 https://www.jpl.nasa.gov/images/pia07999-looking-back-at-purgatory-dune
+- Terrain: USGS Mars 2020 TRN CTX DTM Mosaic, built from Context Camera images from NASA's Mars Reconnaissance Orbiter; CC0. https://www.usgs.gov/data/mars-2020-terrain-relative-navigation-ctx-dtm-mosaic
 
-## AI-use log (fill in for the submission)
-- Code in `src/`, `tools/`, `test/` and `index.html` was first drafted by Claude (Anthropic). Tested by: ______.
+## AI use
+Claude (Anthropic) drafted the code and texts; people tested and reviewed. Full statement in `AI_USE.md`.
+

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model notes: how Mission Design works</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ccircle cx=%278%27 cy=%278%27 r=%277%27 fill=%27%23e0703f%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="md.css">
+<style>
+  .doc { max-width: 800px; margin: 0 auto; padding: var(--s3) 0 var(--s4); }
+  .doc h1 { font-size: 30px; margin: 0 0 var(--s2); }
+  .doc h2 { font-size: 20px; margin: var(--s4) 0 var(--s1); }
+  .doc math { font-size: 1.15em; }
+  .doc .eq { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: var(--s1) var(--s2); margin: var(--s1) 0; overflow-x: auto; }
+  .doc table { width: 100%; border-collapse: collapse; font-size: 14px; margin: var(--s1) 0; }
+  .doc th, .doc td { text-align: left; padding: 6px var(--s1); border-bottom: 1px solid var(--line); vertical-align: top; }
+  .doc code { font-family: var(--mono); font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><i></i>MISSION DESIGN</div>
+  <nav><a class="btn ghost" href="./">Home</a> <a class="btn ghost" href="mission.html">Play</a></nav>
+</header>
+<main class="doc">
+  <h1>Model notes</h1>
+  <p class="dim">What the Mission Design simulation computes, what it simplifies, and which numbers come from NASA pages. Everything in <code>src/md_model.js</code> is described here. The game is a teaching model: its numbers are <b>not</b> data for any real spacecraft or rocket.</p>
+
+  <h2>1. Values from NASA pages</h2>
+  <p>Opened on 2026-11-15. These are the only numbers in the game text that we took from an agency page.</p>
+  <table>
+    <thead><tr><th>Value</th><th>Source</th><th>Where the game uses it</th></tr></thead>
+    <tbody>
+      <tr><td>NASA's Aqua satellite takes about 99 minutes to orbit the Earth at about 705 km, in a sun-synchronous orbit that keeps the angle of sunlight on the ground as consistent as possible.</td><td><a href="https://science.nasa.gov/earth/earth-observatory/catalog-of-earth-satellite-orbits" target="_blank" rel="noopener">NASA Earth Observatory, Catalog of Earth Satellite Orbits</a></td><td>Text of the sun-synchronous orbit card. The game's orbit altitude (600 km) and eclipse time are game values chosen to be similar, not copied.</td></tr>
+      <tr><td>A polar orbit moves the satellite from pole to pole, about 99 minutes for one orbit (for that example), inclination 90 degrees.</td><td>same page</td><td>Text of the polar orbit card.</td></tr>
+      <tr><td>Geostationary orbit: 42,164 km from the centre of the Earth, about 36,000 km above the surface.</td><td>same page</td><td>Not selectable in the game; used in the explanation that higher orbits need more launch energy.</td></tr>
+      <tr><td>Moon distance: mean 384.4 thousand km, perigee 363.3, apogee 405.5 thousand km.</td><td><a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html" target="_blank" rel="noopener">NASA NSSDC Moon Fact Sheet</a></td><td>Text of the lunar orbit card (long link distance).</td></tr>
+    </tbody>
+  </table>
+  <p class="small dim">Not confirmed from a NASA page, so not claimed as sourced: CubeSat unit size and mass limits (sources disagree on the 1U mass limit), launcher capacity and cost figures, radio rates, instrument figures. Those are game values.</p>
+
+  <h2>2. What the simulation computes</h2>
+  <p><b>Mass.</b> The total mass must not exceed the launcher's capacity to the chosen orbit (capacity is zero for orbits a launcher cannot reach).</p>
+  <div class="eq"><math display="block"><mrow><msub><mi>m</mi><mtext>craft</mtext></msub><mo>=</mo><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>m</mi><mi>i</mi></msub><mo>≤</mo><msub><mi>m</mi><mtext>cap</mtext></msub><mo>(</mo><mtext>launcher, orbit</mtext><mo>)</mo></mrow></math></div>
+
+  <p><b>Power.</b> Average power from the panels depends on panel area <math><mi>A</mi></math>, a wing multiplier <math><mi>k</mi></math>, a fixed peak flux and the share of the orbit in sunlight <math><msub><mi>f</mi><mtext>sun</mtext></msub></math>. It must cover the average load.</p>
+  <div class="eq"><math display="block"><mrow><msub><mi>P</mi><mtext>gen</mtext></msub><mo>=</mo><mi>A</mi><mo>·</mo><mi>k</mi><mo>·</mo><mn>190</mn><mo>·</mo><msub><mi>f</mi><mtext>sun</mtext></msub><mo>≥</mo><msub><mi>P</mi><mtext>load</mtext></msub><mo>=</mo><mn>3</mn><mo>+</mo><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>p</mi><mi>i</mi></msub><msub><mi>d</mi><mi>i</mi></msub><mo>+</mo><msub><mi>p</mi><mtext>tx</mtext></msub><msub><mi>f</mi><mtext>contact</mtext></msub><mo>+</mo><mn>0.05</mn><msub><mi>p</mi><mtext>prop</mtext></msub></mrow></math></div>
+  <p class="small dim">Units: watts and square metres. The constant 190 W per square metre and the 3 W core load are game values. <math><msub><mi>d</mi><mi>i</mi></msub></math> is the duty cycle of instrument <math><mi>i</mi></math>.</p>
+
+  <p><b>Battery through eclipse.</b> During eclipse the battery supplies the load; the design is rejected if more than 80 percent of the battery would be used each orbit.</p>
+  <div class="eq"><math display="block"><mrow><mfrac><mrow><msub><mi>P</mi><mtext>load</mtext></msub><mo>·</mo><msub><mi>t</mi><mtext>eclipse</mtext></msub><mo>/</mo><mn>60</mn></mrow><msub><mi>C</mi><mtext>battery</mtext></msub></mfrac><mo>≤</mo><mn>0.8</mn></mrow></math></div>
+  <p class="small dim">Eclipse time <math><msub><mi>t</mi><mtext>eclipse</mtext></msub></math> is in minutes, battery capacity <math><msub><mi>C</mi><mtext>battery</mtext></msub></math> in watt-hours.</p>
+
+  <p><b>Data and communications.</b> Data produced per day, and what the radio can send during ground-station contact:</p>
+  <div class="eq"><math display="block"><mrow><mi>G</mi><mo>=</mo><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>g</mi><mi>i</mi></msub><msub><mi>d</mi><mi>i</mi></msub><mspace width="2em"/><mi>D</mi><mo>=</mo><mfrac><mrow><mi>R</mi><mo>·</mo><msub><mi>t</mi><mtext>contact</mtext></msub><mo>·</mo><mn>60</mn></mrow><mrow><mn>8</mn><mo>·</mo><mn>1000</mn></mrow></mfrac><mspace width="2em"/><mi>ρ</mi><mo>=</mo><mi>min</mi><mo>(</mo><mn>1</mn><mo>,</mo><mfrac><mi>D</mi><mi>G</mi></mfrac><mo>)</mo></mrow></math></div>
+  <p class="small dim"><math><mi>R</mi></math> in megabits per second, <math><msub><mi>t</mi><mtext>contact</mtext></msub></math> in minutes per day, <math><mi>G</mi></math> and <math><mi>D</mi></math> in gigabytes per day. Data beyond the bus storage is lost.</p>
+
+  <p><b>Budget and time.</b> Hardware, launch and ground cost are added and compared with the scenario budget (scaled by difficulty). Weeks to launch are the sum of build weeks and the launcher's wait, compared with the launch window.</p>
+
+  <p><b>Science.</b> Instruments of the kind the scenario wants count in full, other kinds one third. The orbit multiplies everything by how useful it is for the objective.</p>
+  <div class="eq"><math display="block"><mrow><mi>S</mi><mo>=</mo><msub><mi>f</mi><mtext>orbit</mtext></msub><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>s</mi><mi>i</mi></msub><msub><mi>d</mi><mi>i</mi></msub><msub><mi>w</mi><mi>i</mi></msub></mrow></math></div>
+  <p class="small dim"><math><msub><mi>w</mi><mi>i</mi></msub></math> is 1 for a matching instrument and 0.3 otherwise.</p>
+
+  <p><b>Delta-v (background).</b> The rocket equation links the speed change a thruster can give to its propellant. The game does not compute it: each thruster has a fixed delta-v and the Moon scenario needs a minimum.</p>
+  <div class="eq"><math display="block"><mrow><mi>Δ</mi><mi>v</mi><mo>=</mo><msub><mi>I</mi><mtext>sp</mtext></msub><mo>·</mo><msub><mi>g</mi><mn>0</mn></msub><mo>·</mo><mi>ln</mi><mo>(</mo><mfrac><msub><mi>m</mi><mn>0</mn></msub><msub><mi>m</mi><mi>f</mi></msub></mfrac><mo>)</mo></mrow></math></div>
+
+  <h2>3. Random events</h2>
+  <p>A seeded random generator rolls each day. The same seed gives the same mission, so a replay is exact. Events: solar flare (panel output drops for 3 days), ground-station outage (no downlink for 2 days), instrument glitch (no measurements for 2 days), one wing opening only halfway (at launch), and launch failure (depends on the rocket's reliability). Chances are scaled by difficulty.</p>
+
+  <h2>4. Score (100 points)</h2>
+  <table>
+    <tbody>
+      <tr><td>Mission performance</td><td>30</td><td>Success gives full points; partial success and near misses give some.</td></tr>
+      <tr><td>Science value</td><td>20</td><td>Science returned divided by the target.</td></tr>
+      <tr><td>Resource efficiency</td><td>20</td><td>Using 60 to 100 percent of budget, mass and time limits scores best; going over scores zero; wasting most of a limit scores less.</td></tr>
+      <tr><td>Decision quality</td><td>15</td><td>Margins on the scenario's critical resources, and few warnings.</td></tr>
+      <tr><td>Teamwork</td><td>15</td><td>Share of the four roles whose goal the final design meets.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5. Simplifications, stated plainly</h2>
+  <ul>
+    <li>The orbit is a set of numbers (sunlight share, eclipse minutes, contact minutes). No orbit is propagated.</li>
+    <li>Ground contact is minutes per day; there is no signal delay or weather.</li>
+    <li>The thermal, attitude-control and onboard-computer subsystems are not modelled.</li>
+    <li>Launchers are generic classes with made-up capacity, cost and reliability.</li>
+    <li>A mission lasts 30 days in daily steps. The battery is tracked once a day.</li>
+    <li>Several designs can succeed; there is no single perfect answer, but the model is far from a real mission analysis.</li>
+  </ul>
+  <p><a class="btn primary" href="mission.html">Back to the game</a></p>
+</main>
+</body>
+</html>

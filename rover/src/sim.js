@@ -96,7 +96,7 @@
         case "send_data":
           extraW = C.SEND_POWER_W;
           if (S.storage <= 0) notes.push("Nothing to send.");
-          else { S.science += S.pending; notes.push(`Data sent: +${S.pending} science. Arrives in ~${C.SIGNAL_DELAY_MIN[0]}-${C.SIGNAL_DELAY_MIN[1]} min.`); S.pending = 0; S.storage = 0; }
+          else { S.science += S.pending; notes.push(`Data sent: +${S.pending} science.`); S.pending = 0; S.storage = 0; }
           break;
         case "slow_down": wantMove = 0.5; break;
         case "reroute":

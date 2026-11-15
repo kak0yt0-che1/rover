@@ -27,11 +27,11 @@
   const NAMES = ["Pebble", "Dusty", "Rusty", "Sol", "Ziggy", "Comet", "Biscuit", "Orbit", "Pixel", "Nova", "Tumble", "Echo"];
   const FACTS = [
     "A Martian day (a sol) lasts about 24 hours 39 minutes.",
-    "Radio signals need roughly 3 to 22 minutes to cross the gap between Earth and Mars, so rovers drive themselves.",
-    "The 2018 global dust storm blocked so much sunlight that it ended the Opportunity rover's mission.",
-    "Curiosity's aluminium wheels were damaged by sharp rocks early in its mission, which changed how it is driven.",
-    "Mars nights fall far below -70 °C. Real rovers keep their electronics warm with heaters.",
-    "Opportunity once spent weeks freeing its wheels from a sand dune.",
+    "Radio signals can take up to about 22 minutes to cross the gap between Earth and Mars, so rovers have to drive themselves.",
+    "The 2018 global dust storm blocked Opportunity's sunlight for about four months. The rover never answered again after June 2018.",
+    "Curiosity's wheels wore down on sharp rocks, so Perseverance got narrower, larger and thicker aluminium wheels.",
+    "Air temperature in Jezero crater can drop to about -83 °C. Real rovers keep their electronics at working temperature with heat from their power system.",
+    "In 2005 Opportunity needed more than five weeks of planning and careful driving to escape a sand dune.",
   ];
   const noteCount = (tr, re) => tr.reduce((n, st) => n + st.notes.filter((x) => re.test(x)).length, 0);
   const last = (tr) => tr[tr.length - 1];
@@ -113,7 +113,7 @@
   const starStr = (n) => "★".repeat(n) + "☆".repeat(3 - n);
 
   // ---- 1. mission -----------------------------------------------------------
-  const MINFO = { storm: { icon: "🌪️", diff: 3, tip: "Power is everything. Dust eats your sunlight." }, climb: { icon: "⛰️", diff: 2, tip: "Steep ground flips rovers. Look before you drive." }, sand: { icon: "🏜️", diff: 2, tip: "" }, night: { icon: "🌙", diff: 3, tip: "" } };
+  const MINFO = { storm: { icon: "🌪️", diff: 3, tip: "Power is everything. Dust eats your sunlight." }, climb: { icon: "⛰️", diff: 2, tip: "Steep ground flips rovers. Look before you drive." }, sand: { icon: "🏜️", diff: 2, tip: "Soft sand traps fast wheels. Slow down when sand is ahead." }, night: { icon: "🌙", diff: 3, tip: "The cold kills slowly. Heat earlier and charge before the battery runs low." } };
   let typeTimer = 0;
   function typeText(el, text) {
     clearInterval(typeTimer); let i = 0; el.textContent = ""; el.classList.add("caret");
@@ -125,7 +125,7 @@
     const hero = h("div", { class: "hero" },
       h("div", { class: "sun" }),
       h("div", { class: "mtn", html: '<svg viewBox="0 0 1000 80" preserveAspectRatio="none" width="100%" height="80"><path d="M0 80V50L90 22 170 48 270 10 380 52 480 28 600 56 720 18 830 50 920 30 1000 52V80Z" fill="#6e2c14"/><path d="M0 80V62L120 42 240 64 400 40 560 66 700 44 860 66 1000 48V80Z" fill="#8a3b1c" opacity=".8"/></svg>' }),
-      h("div", { class: "title" }, h("h1", {}, "ROVER RULES"), h("p", {}, "Mars is 225 million km away. Nobody can steer. You write the rules, the rover lives or dies by them.")),
+      h("div", { class: "title" }, h("h1", {}, "ROVER RULES"), h("p", {}, "Mars is so far away that radio signals can take up to about 22 minutes to arrive. Nobody can steer. You write the rules, the rover lives or dies by them.")),
       h("div", { class: "driver", html: MR.roverSVG(MR.defaultDesign(), { drive: true }) }));
     el.replaceChildren(hero,
       h("div", { class: "grid2" }, MR.MISSION_LIST.map((m) => {
@@ -141,7 +141,7 @@
         h("h4", { class: "objh" }, "Bonus objectives"),
         h("ul", { class: "objs" }, (OBJ[G.mission.id] || []).map(([label], k) => h("li", { class: (objDone[G.mission.id] || [])[k] ? "done" : "" }, label))),
         h("p", { class: "small dim" }, `Badges collected: ${badgesGot.length} of ${BADGES.length}` + (badgesGot.length ? " · " + BADGES.filter((b) => badgesGot.includes(b[0])).map((b) => b[1]).join(", ") : "")),
-        h("p", { class: "small dim" }, `Signals take ${C.SIGNAL_DELAY_MIN[0]}-${C.SIGNAL_DELAY_MIN[1]} minutes to reach Mars. Design the rover, write IF-THEN rules, uplink them as one package, watch a Martian day (a sol), then read the replay and fix what failed.`)),
+        h("p", { class: "small dim" }, `Real signals can take up to about ${C.SIGNAL_DELAY_MAX_MIN} minutes to reach Mars, so the ground team sends one plan and the rover must carry it out alone. In the game: design the rover, write IF-THEN rules, uplink them once, watch a Martian day (a sol), then read the replay and fix what failed. You cannot change the rules mid-sol, and the radio delay itself is not simulated.`)),
       h("p", {}, h("button", { class: "btn primary big", onclick: () => { sfx("click"); go("design"); } }, "Enter the assembly bay  →")));
     typeText(brief, G.mission.brief);
   }
@@ -345,7 +345,9 @@
     { sensor: "temp", op: "<", value: -45, action: "heat" },
     { sensor: "battery", op: "<", value: 25, action: "charge" },
     { sensor: "slope_ahead", op: ">", value: 17, action: "reroute" },
-    { sensor: "storage", op: ">", value: 60, action: "send_data" },
+    { sensor: "storage", op: ">", value: 25, action: "send_data" },
+    // photos only in a one-hour window with a healthy battery, so the rover still drives the rest of the sol
+    { sensor: "time_of_day", op: ">=", value: 9, action: "take_photo", more: [{ sensor: "time_of_day", op: "<", value: 10 }, { sensor: "battery", op: ">", value: 50 }] },
   ];
 
   // quick "what are my chances" check: replays the sol on 12 different random seeds with the current program
@@ -397,7 +399,7 @@
             h("div", { class: "odds", id: "odds" }),
             ws,
             h("div", { style: "display:flex;gap:8px;flex-wrap:wrap;margin-top:16px" },
-              h("button", { class: "btn", onclick: () => { sfx("snap"); G.rules = EXAMPLE().filter((r) => rv.sensors.has(r.sensor) && rv.actions.has(r.action)).slice(0, rv.slots); G.elseAction = "follow_plan"; G.sel = null; commit(); } }, "Load example"),
+              h("button", { class: "btn", onclick: () => { sfx("snap"); G.rules = EXAMPLE().filter((r) => rv.sensors.has(r.sensor) && rv.actions.has(r.action)).slice(0, rv.slots); G.elseAction = "follow_plan"; G.sel = null; commit(); say("Example loaded: it survives and earns a little science from photos. A drill plus a trip to the sample site earns much more."); } }, "Load example"),
               h("button", { class: "btn", disabled: !G.rules.length || !rv.ok, title: "Replays the sol with 8 different random seeds and nudges your thresholds. It is search, not a trained model.", onclick: () => {
                 say("Co-pilot is trying thousands of numbers…");
                 setTimeout(() => {
@@ -478,7 +480,7 @@
     launchTimers.forEach(clearTimeout); launchTimers = [];
     const nR = Math.min(G.rules.length, rover().slots);
     const fact = $("lfact"); if (fact) fact.textContent = "Did you know? " + FACTS[Math.floor(Math.random() * FACTS.length)];
-    const lines = ["> PACKAGING ROVER PROGRAM…", `> ${nR} RULE${nR === 1 ? "" : "S"} COMPILED · HARDWARE CHECK OK`, `> UPLINK TO MARS (one-way delay ${C.SIGNAL_DELAY_MIN[0]}-${C.SIGNAL_DELAY_MIN[1]} min, skipped for the game)`, "> ROVER ONLINE. YOU CANNOT CHANGE ANYTHING NOW."];
+    const lines = ["> PACKAGING ROVER PROGRAM…", `> ${nR} RULE${nR === 1 ? "" : "S"} COMPILED · HARDWARE CHECK OK`, `> UPLINK TO MARS (real one-way delay: up to about ${C.SIGNAL_DELAY_MAX_MIN} min, not simulated in the game)`, "> ROVER ONLINE. YOU CANNOT CHANGE ANYTHING NOW."];
     lines.forEach((t, k) => launchTimers.push(setTimeout(() => { if (G.loopId !== id) return; const n = $("l" + (k + 1)); if (n) n.textContent = t; const p = $("lpg"); if (p) p.style.width = ((k + 1) / lines.length) * 100 + "%"; sfx("click"); }, 350 + k * 650)));
     launchTimers.push(setTimeout(() => { if (G.loopId === id) endLaunch(); }, 350 + lines.length * 650 + 300));
   }
@@ -526,7 +528,8 @@
     const pulse = 8 + 3 * Math.sin(now / 280);
     g.strokeStyle = "#f2c94c"; g.lineWidth = 2.5; g.beginPath(); g.arc(cx(m.goal[0]), cy(m.goal[1]), pulse, 0, 7); g.stroke();
     g.strokeStyle = "rgba(242,201,76,.4)"; g.beginPath(); g.arc(cx(m.goal[0]), cy(m.goal[1]), pulse + 7, 0, 7); g.stroke();
-    g.fillStyle = "#f2c94c"; g.font = `bold ${11 / Z}px sans-serif`; g.fillText("GOAL / SAMPLE", cx(m.goal[0]) - 34 / Z, cy(m.goal[1]) - 20 / Z);
+    g.save(); g.font = `bold ${11 / Z}px sans-serif`; g.textAlign = "center"; g.lineWidth = 3 / Z; g.strokeStyle = "rgba(0,0,0,.75)"; g.fillStyle = "#f2c94c";
+    g.strokeText("GOAL / SAMPLE", cx(m.goal[0]), cy(m.goal[1]) - (pulse + 16)); g.fillText("GOAL / SAMPLE", cx(m.goal[0]), cy(m.goal[1]) - (pulse + 16)); g.restore();
     // rover sprite, turned toward where it is heading
     const rx = px, ry = py;
     const dx = b.x - a.x, dy = b.y - a.y; if (dx || dy) G.ang = Math.atan2(dy, dx);
@@ -670,11 +673,11 @@
     const d = $("about");
     d.replaceChildren(
       h("h2", {}, "Science behind the game"),
-      h("p", {}, "The terrain is real. Elevation comes from the ", h("a", { href: T.url, target: "_blank", rel: "noopener" }, "USGS Astrogeology Mars 2020 CTX DTM mosaic"), " of Jezero crater (20 m per pixel). We computed slopes from it ourselves. Terrain types (regolith, sand, rock) are a simple heuristic from slope and roughness, informed by NASA's AI4Mars rover-image labels but not trained on them."),
+      h("p", {}, "The terrain is real. Elevation comes from the ", h("a", { href: T.url, target: "_blank", rel: "noopener" }, "USGS Astrogeology Mars 2020 CTX DTM mosaic"), " of Jezero crater (20 m per pixel). We computed slopes from it ourselves; the slope shown for each 320 m cell is its steepest 10%, not an average, so it reads steeper than a map-wide average slope. Terrain types (regolith, sand, rock) are a simple heuristic from slope and roughness, informed by NASA's AI4Mars rover-image labels but not trained on them."),
       h("p", {}, h("b", {}, "Autonomy: "), "the rover uses your rules plus A* path planning on a terrain-cost map. That is rule-based autonomous navigation, not a trained AI model. The co-pilot button is a hill-climbing search over your thresholds."),
       h("p", {}, h("b", {}, "Honest simplifications: "), "distances are compressed (one cell is about 320 m and a sol takes 96 steps), power and wear numbers are game-balance values, and rover physics is much simpler than reality."),
       h("table", {}, h("tr", {}, h("th", {}, "Number"), h("th", {}, "Value"), h("th", {}, "Source / status")),
-        ...Object.entries(MR.SOURCES).map(([k, v]) => h("tr", {}, h("td", {}, k), h("td", {}, k in C ? JSON.stringify(C[k]) : ""), h("td", {}, (v.verified ? "verified: " : "NEEDS HUMAN CHECK: ") + v.note)))),
+        ...Object.entries(MR.SOURCES).map(([k, v]) => h("tr", {}, h("td", {}, k), h("td", {}, k in C ? JSON.stringify(C[k]) : ""), h("td", {}, (v.kind === "game" ? "game value: " : v.verified ? "checked: " : "NEEDS HUMAN CHECK: ") + v.note)))),
       h("p", { class: "small dim" }, "AI use: this project's code was written with an AI assistant (Claude) and tested by the team. See the submission's AI-use statement."),
       h("p", {}, h("button", { class: "btn", onclick: () => d.close() }, "Close")));
     d.showModal();

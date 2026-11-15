@@ -1,6 +1,8 @@
 // Balance check: how often does each strategy survive across 40 random seeds?
 const fs = require("fs"), path = require("path");
-globalThis.TERRAIN_DATA = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/terrain.json")));
+// data/terrain_data.js is "window.TERRAIN_DATA = {...};" so strip the wrapper and parse the JSON inside it
+globalThis.TERRAIN_DATA = JSON.parse(fs.readFileSync(path.join(__dirname, "../data/terrain_data.js"), "utf8")
+  .replace(/^window\.TERRAIN_DATA = /, "").replace(/;\s*$/, ""));
 for (const f of ["config", "rng", "terrain", "rover", "rules", "missions", "sim", "tune"]) require(`../src/${f}.js`);
 MR.loadTerrain();
 const d = MR.defaultDesign();

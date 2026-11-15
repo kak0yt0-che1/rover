@@ -17,7 +17,7 @@
       eventPool: ["dust_gust", "cold_snap", "rock_strike"],
       // storm builds from about step 24 to 40, holds, then clears slowly
       dust: (t) => (t < 56 ? ramp(t, 24, 40, 0.05, 0.75) : ramp(t, 56, 84, 0.75, 0.1)),
-      real: "Inspired by the 2018 global dust storm that ended the Opportunity rover's mission.",
+      real: "Inspired by the 2018 global dust storm that blocked Opportunity's sunlight for about four months and ended its mission.",
     },
     climb: {
       id: "climb",
@@ -44,7 +44,7 @@
     seed: 3303, planWeight: 0.1, tipSlope: 26, eventCount: 2,
     eventPool: ["rock_strike", "dust_gust", "cold_snap"],
     dust: () => 0.05,
-    real: "Real rovers have been stuck in sand: Opportunity spent weeks freeing its wheels from a dune in 2005. Terrain types here are inferred from the USGS elevation model.",
+    real: "Real rovers have been stuck in sand: Opportunity needed more than five weeks to escape a sand dune in 2005. Terrain types here are inferred from the USGS elevation model.",
   };
   MR.MISSIONS.night = {
     id: "night",
@@ -57,7 +57,7 @@
     seed: 4404, planWeight: 2, tipSlope: 26, eventCount: 3, startTod: 0.6,
     eventPool: ["cold_snap", "cold_snap", "rock_strike", "dust_gust"],
     dust: () => 0.05,
-    real: "Mars nights are far colder than Earth's. Real rovers use heaters and radioisotope warmth to keep their electronics alive.",
+    real: "Mars nights are far colder than Earth's. Perseverance's power system also supplies the heat that keeps its tools and systems at their correct operating temperatures (NASA Science, rover components page).",
   };
   MR.MISSION_LIST = [MR.MISSIONS.storm, MR.MISSIONS.climb, MR.MISSIONS.sand, MR.MISSIONS.night];
 })();
